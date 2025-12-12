@@ -39,11 +39,13 @@
       <a-marker preset="hiro">
 
         <!-- OBJETO 3D -->
-        <!-- Uma caixa azul posicionada 0.5m acima do marcador -->
-        <a-box 
-          position="0 0.5 0"      <!-- (x=0, y=0.5, z=0) → acima do centro do marcador -->
-          color="#4CC3D9">        <!-- Cor azul -->
-        </a-box>
+        <!-- Um pato amarelo posicionada 0.5m acima do marcador -->
+  <a-entity 
+    gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/yellow_duck.glb"
+    scale="0.5 0.5 0.5"
+    position="0 0 0"
+    rotation="0 180 0">
+  </a-entity>
 
       </a-marker>
 
