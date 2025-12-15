@@ -18,6 +18,9 @@
     <!-- Importa A-Frame → a biblioteca que cria objetos 3D -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 
+    <!-- Permite movimento do personagem -->
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.2.0/dist/aframe-extras.min.js"></script>
+
     <!-- Importa AR.js → a biblioteca que ativa a Realidade Aumentada -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
@@ -52,8 +55,35 @@
       <!-- CÂMERA -->
       <!-- A câmera usada para visualizar a RA -->
       <a-entity camera></a-entity>
-
+      
     </a-scene>
 
+    <script>
+      // Seleciona a entidade do modelo 3D usando o ID que definimos ('personagem')
+      const entity = document.querySelector('#personagem');
+      
+      // ADICIONADO: O nome exato da animação que descobrimos no console do navegador
+      const NOME_DA_ANIMACAO = "SickJacken_rigAction";
+
+      // Cria um 'listener' (ouvinte) que espera o evento 'model-loaded' (modelo carregado)
+      entity.addEventListener('model-loaded', (e) => {
+        const model = e.detail.model;      // Pega o objeto 3D carregado
+        const animations = model.animations; // Pega a lista de animações do objeto 3D
+
+        // Mostra no console a lista de animações (útil para debug)
+        console.log('Animações disponíveis:', animations.map(a => a.name));
+
+        // Se o modelo tiver alguma animação, nós a ativamos
+        if (animations.length > 0) {
+          // Configura o componente 'animation-mixer' para tocar a animação desejada
+          entity.setAttribute('animation-mixer', {
+            clip: NOME_DA_ANIMACAO,  // Usa o nome exato da animação ('SickJacken_rigAction')
+            loop: 'repeat'             // Faz a animação repetir infinitamente
+          });
+        } else {
+          console.warn('Nenhuma animação encontrada no modelo.'); // Mensagem de aviso se nenhuma animação for encontrada
+        }
+      });
+    </script>
   </body>
 </html>
