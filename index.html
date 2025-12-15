@@ -1,59 +1,92 @@
-<!DOCTYPE html> <!-- Diz que o documento é HTML5 -->
+<!DOCTYPE html> 
+<!-- Define que este documento é HTML5 -->
 
 <html>
-  <head> <!-- Área de configurações e importações do projeto -->
+  <head>
+    <!-- Área de configurações e importações do projeto -->
 
-    <!-- Define que o texto da página usa UTF-8 (acentos e emojis não quebram) -->
     <meta charset="utf-8">
+    <!-- Define a codificação de caracteres como UTF-8 
+         → permite acentos, emojis e caracteres especiais sem problemas -->
 
-    <!-- Ajusta a visualização em celulares para ocupar toda a tela -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- Ajusta a tela em dispositivos móveis
+         width=device-width → largura da tela do dispositivo
+         initial-scale=1.0 → zoom inicial
+         user-scalable=no → impede o zoom manual do usuário -->
 
-    <!-- Permite que a página funcione como "app" no iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- Permite que a página funcione como "app" em iPhones -->
 
-    <!-- Permite que a página funcione como "app" no Android -->
     <meta name="mobile-web-app-capable" content="yes">
+    <!-- Permite que a página funcione como "app" em Android -->
 
-    <!-- Importa A-Frame → a biblioteca que cria objetos 3D -->
+    <!-- Importa A-Frame (biblioteca 3D) -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 
-    <!-- Importa AR.js → a biblioteca que ativa a Realidade Aumentada -->
+    <!-- Importa AR.js (Realidade Aumentada) -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-
   </head>
 
-  <!-- O que aparece na tela começa no body -->
   <body style="margin:0; overflow:hidden;">
-    <!-- margin:0 → tira margens da página -->
-    <!-- overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
+    <!-- margin:0 remove margens da página
+         overflow:hidden remove barras de rolagem para câmera ocupar toda a tela -->
 
-    <!-- Inicia a cena 3D + AR.js -->
+    <!-- Cena 3D + AR.js -->
+     <!-- Deixa a cena embutida na página, sem VR completo -->
+    <!-- Define que a fonte de vídeo é a webcam -->
     <a-scene 
-      embedded                      <!-- Impede modo VR e deixa cena embutida na página -->
-      arjs="sourceType: webcam;     <!-- Diz que a fonte do vídeo é a webcam/câmera -->
-           debugUIEnabled: false;"> <!-- Remove botões de debug da RA -->
+      embedded                     
+      arjs="sourceType: webcam;     
+           debugUIEnabled: false;"> <!-- Remove os botões de debug da AR -->
 
-      <!-- MARCADOR HIRO -->
-      <!-- Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
+      <!-- Marcador Hiro -->
+      <!-- Tudo que estiver dentro aparece quando o marcador Hiro é detectado -->
       <a-marker preset="hiro">
 
-        <!-- OBJETO 3D -->
-        <!-- Um personagem droys posicionada 0.5m acima do marcador -->
-  <a-entity 
-    gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-    scale="1 1 1"
-    position="0 0 0"
-    animation-mixer>
-  </a-entity>
+        <!-- Entidade do personagem 3D -->
+        <!-- ID para referenciar o modelo no script -->
+         <!-- Ajusta o tamanho do modelo -->
+        <!-- Posição relativa ao marcador -->
+        <a-entity 
+          id="personagem"  
+          gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
+          scale="1 1 1"  
+          position="0 0 0" 
+          animation-mixer> <!-- Ativa o sistema de animação do GLB -->
+        </a-entity>
 
       </a-marker>
 
-      <!-- CÂMERA -->
-      <!-- A câmera usada para visualizar a RA -->
+      <!-- Câmera -->
       <a-entity camera></a-entity>
 
     </a-scene>
+
+    <!-- Script para descobrir animações e tocar a primeira -->
+    <script>
+      // Seleciona a entidade do modelo pelo ID
+      const entity = document.querySelector('#personagem');
+
+      // Espera o modelo carregar totalmente
+      entity.addEventListener('model-loaded', (e) => {
+        const model = e.detail.model;       // Objeto 3D carregado
+        const animations = model.animations; // Lista de animações disponíveis
+
+        // Mostra no console todos os nomes das animações
+        console.log('Animações disponíveis:', animations.map(a => a.name));
+
+        // Se houver animações, toca automaticamente a primeira
+        if (animations.length > 0) {
+          entity.setAttribute('animation-mixer', {
+            clip: animations[0].name,  // Nome da animação a tocar
+            loop: 'repeat'             // Faz a animação repetir infinitamente
+          });
+        } else {
+          console.warn('Nenhuma animação encontrada no modelo.');
+        }
+      });
+    </script>
 
   </body>
 </html>
