@@ -26,8 +26,11 @@
 
     <!-- Importa AR.js (Realidade Aumentada) -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  </head>
 
+    <!-- Importa biblioteca para screenshot-->
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+    
+  </head> 
   <body style="margin:0; overflow:hidden;">
     <!-- margin:0 remove margens da página
          overflow:hidden remove barras de rolagem para câmera ocupar toda a tela -->
@@ -61,8 +64,15 @@
       <!-- Câmera -->
       <a-entity camera></a-entity>
 
+      <!-- Tirar screenshot-->
+      </a-scene> <button id="screenshotButton" style="position: absolute; bottom: 10px; left: 10px; z-index: 999; padding: 10px;">
     </a-scene>
-
+</button> <!-- Gravaçao de tela-->
+    
+    <button id="recordButton" style="position: absolute; bottom: 10px; right: 10px; z-index: 999; padding: 10px;"> 
+      🔴 Iniciar Gravação 
+    </button> 
+  
     <!-- Script para descobrir animações e tocar a primeira -->
     <script>
       // Seleciona a entidade do modelo pelo ID
@@ -84,6 +94,75 @@
           });
         } else {
           console.warn('Nenhuma animação encontrada no modelo.');
+        }
+      });
+      // --------------------------------------------------------
+      // LÓGICA DE SCREENSHOT (NOVO)
+      // --------------------------------------------------------
+      // Seleciona o elemento <a-scene> (a cena)
+      const scene = document.querySelector('a-scene'); 
+      // Seleciona o botão de screenshot
+      const screenshotButton = document.querySelector('#screenshotButton'); 
+
+      // Adiciona um 'listener' de clique ao botão de screenshot
+      screenshotButton.addEventListener('click', () => { 
+        // Usa o componente 'screenshot' embutido do A-Frame para capturar e salvar a imagem
+        scene.components.screenshot.capture('filename', 'ar-screenshot.png');
+        // Alerta o usuário
+        alert('Screenshot capturado e salvo como ar-screenshot.png!');
+      });
+
+      // --------------------------------------------------------
+      // LÓGICA DE GRAVAÇÃO DE VÍDEO (NOVO)
+      // --------------------------------------------------------
+      
+      let recorder; // Variável para armazenar a instância do RecordRTC
+      const recordButton = document.querySelector('#recordButton'); // Seleciona o botão de gravação
+      let isRecording = false; // Variável de estado para saber se está gravando
+
+      // Adiciona um 'listener' de clique ao botão de gravação
+      recordButton.addEventListener('click', () => { 
+        if (!isRecording) {
+          // --- LÓGICA PARA INICIAR GRAVAÇÃO --- 
+          
+          const canvas = document.querySelector('canvas'); // Pega o elemento <canvas>
+          
+          // Captura o stream de vídeo do canvas (o que está sendo renderizado)
+          const canvasStream = canvas.captureStream();
+          
+          // Cria uma nova instância do RecordRTC
+          recorder = new RecordRTC(canvasStream, {
+            type: 'video',         // Tipo vídeo
+            mimeType: 'video/webm',// Formato webm
+          });
+
+          recorder.startRecording(); // Inicia a gravação
+          isRecording = true; // Atualiza o estado
+          recordButton.textContent = '⏹ Parar Gravação'; // Altera o texto
+          recordButton.style.backgroundColor = 'red'; // Destaca o botão
+          alert('Gravação iniciada!'); // Alerta o usuário
+        } else {
+          //  --- LÓGICA PARA PARAR GRAVAÇÃO --- 
+          
+          // Para a gravação e executa a função de callback
+          recorder.stopRecording(() => { 
+            const blob = recorder.getBlob(); // Pega o arquivo de vídeo (Blob)
+            
+            // Cria link temporário para download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); // Cria link <a>
+            a.style.display = 'none'; // Oculta o link
+            a.href = url; // Define o URL
+            a.download = 'ar-video-recording.webm'; // Nome do arquivo
+            document.body.appendChild(a); // Adiciona ao corpo
+            a.click(); // Simula clique para download
+            window.URL.revokeObjectURL(url); // Libera o URL
+            
+            isRecording = false; // Atualiza o estado
+            recordButton.textContent = '🔴 Iniciar Gravação'; // Restaura o texto
+            recordButton.style.backgroundColor = ''; // Remove o destaque
+            alert('Gravação parada e salva como ar-video-recording.webm!'); // Alerta
+          });
         }
       });
     </script>
