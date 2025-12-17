@@ -30,14 +30,16 @@
   </head>
 
   <!-- O que aparece na tela começa no body -->
-  <body style="margin:0; overflow:hidden;">
-    <!-- margin:0 → tira margens da página -->
+   <!-- margin:0 → tira margens da página -->
     <!-- overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
-
+  <body style="margin:0; overflow:hidden;">
+  
     <!-- Inicia a cena 3D + AR.js -->
+     <!-- Impede modo VR e deixa cena embutida na página -->
+    <!-- Diz que a fonte do vídeo é a webcam/câmera -->
     <a-scene 
-      embedded                      <!-- Impede modo VR e deixa cena embutida na página -->
-      arjs="sourceType: webcam;     <!-- Diz que a fonte do vídeo é a webcam/câmera -->
+      embedded                     
+      arjs="sourceType: webcam;     
            debugUIEnabled: false;"> <!-- Remove botões de debug da RA -->
 
       <!-- MARCADOR HIRO -->
@@ -60,10 +62,10 @@
       <!-- CÂMERA -->
       <!-- A câmera usada para visualizar a RA -->
       <a-entity camera></a-entity>
-
+  </a-scene>
+    
        <!-- Botao screenshot -->
-      </a-scene> 
-    <button id="screenshotButton" style="position: absolute; bottom: 10px; left: 10px; z-index: 999; padding: 10px;">
+         <button id="screenshotButton" style="position: absolute; bottom: 10px; left: 10px; z-index: 999; padding: 10px;">
       📸 Tirar Screenshot
     </button>
 
@@ -76,8 +78,8 @@
       // Seleciona a entidade do modelo 3D usando o ID que definimos ('personagem')
       const entity = document.querySelector('#personagem');
       
-      // ADICIONADO: O nome exato da animação que descobrimos no console do navegador
-      const NOME_DA_ANIMACAO = "SickJacken_rigAction";
+      // O nome da animaçao
+      const SickJacken_rigAction = "SickJacken_rigAction";
 
       // Cria um 'listener' (ouvinte) que espera o evento 'model-loaded' (modelo carregado)
       entity.addEventListener('model-loaded', (e) => {
@@ -87,11 +89,11 @@
         // Mostra no console a lista de animações (útil para debug)
         console.log('Animações disponíveis:', animations.map(a => a.name));
 
-        // Se o modelo tiver alguma animação, nós a ativamos
+        // Ativa a animaçao se tiver
         if (animations.length > 0) {
           // Configura o componente 'animation-mixer' para tocar a animação desejada
           entity.setAttribute('animation-mixer', {
-            clip: NOME_DA_ANIMACAO,  // Usa o nome exato da animação ('SickJacken_rigAction')
+            clip: SickJacken_rigAction,  // Usa o nome exato da animação 
             loop: 'repeat'             // Faz a animação repetir infinitamente
           });
         } else {
@@ -100,7 +102,7 @@
       });
 
       // --------------------------------------------------------
-      // LÓGICA DE SCREENSHOT (NOVO)
+      // LÓGICA DE SCREENSHOT 
       // --------------------------------------------------------
       // Seleciona o elemento <a-scene> (a cena)
       const scene = document.querySelector('a-scene'); 
@@ -110,13 +112,13 @@
       // Adiciona um 'listener' de clique ao botão de screenshot
       screenshotButton.addEventListener('click', () => { 
         // Usa o componente 'screenshot' embutido do A-Frame para capturar e salvar a imagem
-        scene.components.screenshot.capture('filename', 'ar-screenshot.png');
+        scene.components.screenshot.capture('perspective');
         // Alerta o usuário
-        alert('Screenshot capturado e salvo como ar-screenshot.png!');
+        alert('Screenshot capturado');
       });
 
       // --------------------------------------------------------
-      // LÓGICA DE GRAVAÇÃO DE VÍDEO (NOVO)
+      // LÓGICA DE GRAVAÇÃO DE VÍDEO
       // --------------------------------------------------------
       
       let recorder; // Variável para armazenar a instância do RecordRTC
@@ -126,12 +128,12 @@
       // Adiciona um 'listener' de clique ao botão de gravação
       recordButton.addEventListener('click', () => { 
         if (!isRecording) {
+         
           // --- LÓGICA PARA INICIAR GRAVAÇÃO --- 
-          
           const canvas = document.querySelector('canvas'); // Pega o elemento <canvas>
           
           // Captura o stream de vídeo do canvas (o que está sendo renderizado)
-          const canvasStream = canvas.captureStream();
+          const canvasStream = canvas.captureStream(30);
           
           // Cria uma nova instância do RecordRTC
           recorder = new RecordRTC(canvasStream, {
