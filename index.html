@@ -23,10 +23,9 @@
   <!-- O que aparece na tela começa no body + margin:0 → tira margens da página + overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
   <body style="margin:0; overflow:hidden;">
     <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
-    <a-scene
-      embedded
-      arjs="sourceType: webcam;
-      debugUIEnabled: false;"> <!-- Remove botões de debug da RA -->
+   <a-scene embedded 
+  renderer="preserveDrawingBuffer: true; alpha: true;" 
+  arjs="sourceType: webcam; videoTexture: true;"> <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
       <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
       <a-marker preset="hiro">
         <!-- Adiciona id ao personagem + OBJETO 3D + Um personagem droys posicionada 0.5m acima do marcador -->
@@ -41,18 +40,21 @@
       <!-- CÂMERA + A câmera usada para visualizar a RA -->
       <a-entity camera></a-entity>
   </a-scene>
-    
-       <!-- Botao screenshot -->
-         <button id="screenshotButton" style="position: absolute; bottom: 10px; left: 10px; z-index: 999; padding: 10px;">
-      📸 Tirar Screenshot
+     <!-- Ancora para os botoes -->
+      <div style="position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 10000; pointer-events: none;">
+     <!-- Botao screenshot -->
+    <button id="btnScreenshot" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
+      📸 Tirar Foto
     </button>
-
     <!-- Botao gravaçao de tela -->
-    <button id="recordButton" style="position: absolute; bottom: 10px; right: 10px; z-index: 999; padding: 10px;">
-      🔴 Iniciar Gravação
+    <button id="btnRecord" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
+      🔴 Gravar Vídeo
     </button>
+</div>
 
     <script>
+      document.querySelector('#btnScreenshot').addEventListener('click', () => {
+        const canvas = document.querySelector('canvas');
       // Seleciona a entidade do modelo 3D usando o ID que definimos ('personagem')
       const entity = document.querySelector('#personagem');      
       // O nome da animaçao<
@@ -86,8 +88,9 @@
       const screenshotButton = document.querySelector('#screenshotButton');
       // Adiciona um 'listener' de clique ao botão de screenshot
       screenshotButton.addEventListener('click', () => {
-        // Usa o componente 'screenshot' embutido do A-Frame para capturar e salvar a imagem
-        scene.components.screenshot.capture('perspective');
+        // ... lógica de criar o link e baixar
+        const canvas = document.querySelector('canvas');
+        const imageData = canvas.toDataURL("image/png");
         // Alerta o usuário
         alert('Screenshot capturado');
       });
