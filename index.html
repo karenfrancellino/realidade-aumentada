@@ -18,7 +18,16 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
      <!-- Importa biblioteca para screenshot-->
     <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
-
+    <!-- Ferramenta para acionar tela ceheia nos dispositivos maiores-->
+<style>
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+    left: 0 !important;
+    top: 0 !important;
+    position: absolute !important;
+  }
+</style>
   </head>
   <!-- O que aparece na tela começa no body + margin:0 → tira margens da página + overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
   <body style="margin:0; overflow:hidden;">
@@ -53,27 +62,27 @@
 </div>
 
     <script>
-      document.querySelector('#btnScreenshot').addEventListener('click', () => {
-        const canvas = document.querySelector('canvas');
-      // Seleciona a entidade do modelo 3D usando o ID que definimos ('personagem')
-      const entity = document.querySelector('#personagem');      
-      // O nome da animaçao<
-      const SickJacken_rigAction = "SickJacken_rigAction";
-      // Cria um 'listener' (ouvinte) que espera o evento 'model-loaded' (modelo carregado)
-      entity.addEventListener('model-loaded', (e) => {
-        const model = e.detail.model;      // Pega o objeto 3D carregado
-        const animations = model.animations; // Pega a lista de animações do objeto 3D
+      // Variaveis
+    const personagem = document.querySelector('#personagem'); // Variavel personagem
+    const btnFoto = document.querySelector('#btnScreenshot'); // Variavel print da tela
+    const btnVideo = document.querySelector('#btnRecord'); // Variavel gravar tela 
+    const canvas = document.querySelector('canvas'); // Variavel responsavel por vincular as camadas de imagem, personage + camera
+    const SickJacken_rigAction = "SickJacken_rigAction"; // Variavel para chamar açao do personagem
 
-        // Mostra no console a lista de animações (útil para debug)
-        console.log('Animações disponíveis:', animations.map(a => a.name));
-
-        // Ativa a animaçao se tiver
-        if (animations.length > 0) {
-          // Configura o componente 'animation-mixer' para tocar a animação desejada
-          entity.setAttribute('animation-mixer', {
-            clip: SickJacken_rigAction,  // Usa o nome exato da animação 
-            loop: 'repeat'             // Faz a animação repetir infinitamente
-          });
+     // Ação de carregar o personagem
+personagem.addEventListener('model-loaded', (e) => {
+    
+    const model = e.detail.model;  // Solicita o arquivo 3D
+    const animations = model.animations; // Solicita açao do personagem do aquivo 3D
+  
+// Ativa a animaçao se tiver
+    if (animations.length > 0) {
+      // Configura o componente 'animation-mixer' para tocar a animação desejada
+        personagem.setAttribute('animation-mixer', {
+            clip: SickJacken_rigAction, // Inicia a açao do personagem
+            loop: 'repeat' // Faz a animação repetir infinitamente
+        });
+      
         } else {
           console.warn('Nenhuma animação encontrada no modelo.'); // Mensagem de aviso se nenhuma animação for encontrada
         }
@@ -83,69 +92,74 @@
       // LÓGICA DE SCREENSHOT 
       // --------------------------------------------------------
       // Seleciona o elemento <a-scene> (a cena)
-      const scene = document.querySelector('a-scene');
-      // Seleciona o botão de screenshot
-      const screenshotButton = document.querySelector('#screenshotButton');
-      // Adiciona um 'listener' de clique ao botão de screenshot
-      screenshotButton.addEventListener('click', () => {
-        // ... lógica de criar o link e baixar
-        const canvas = document.querySelector('canvas');
-        const imageData = canvas.toDataURL("image/png");
-        // Alerta o usuário
-        alert('Screenshot capturado');
-      });
+btnFoto.addEventListener('click', () => {
+    
+    // Tira a "foto" do que está passando no canvas agora
+    const dadosDaImagem = canvas.toDataURL("image/png");
+    // Cria um link invisível para "enganar" o navegador e baixar o arquivo
+    const linkTemporario = document.createElement('a');
+    linkTemporario.download = "minha-foto-ar.png"; // Nome do arquivo que será salvo
+    linkTemporario.href = dadosDaImagem;
+    // 3. Simula o clique no link para iniciar o download
+    linkTemporario.click();
+    
+    // Alerta de captura de tela 
+    alert('Foto capturada com sucesso!');
+}); 
 
       // --------------------------------------------------------
       // LÓGICA DE GRAVAÇÃO DE VÍDEO
       // --------------------------------------------------------
-      
-      let recorder; // Variável para armazenar a instância do RecordRTC
-      const recordButton = document.querySelector('#recordButton'); // Seleciona o botão de gravação
-      let isRecording = false; // Variável de estado para saber se está gravando
+let gravador; // Variável para armazenar a instância do RecordRTC
+let gravando = false;  // Variável de estado para saber se está gravando
 
-      // Adiciona um 'listener' de clique ao botão de gravação
-      recordButton.addEventListener('click', () => {
-        if (!isRecording) {
-         
-          // --- LÓGICA PARA INICIAR GRAVAÇÃO --- 
-          const canvas = document.querySelector('canvas'); // Pega o elemento <canvas>
-          // Captura o stream de vídeo do canvas (o que está sendo renderizado)
-          const canvasStream = canvas.captureStream(30);          
-          // Cria uma nova instância do RecordRTC
-          recorder = new RecordRTC(canvasStream, {
-            type: 'video',         // Tipo vídeo
-            mimeType: 'video/webm',// Formato webm
-          });
+btnVideo.addEventListener('click', () => {
+     // --- LÓGICA PARA INICIAR GRAVAÇÃO ---
+    if (gravando === false) {
+        // --- AÇÃO A: LIGAR A GRAVAÇÃO ---
+        
+        // Captura o fluxo de imagens do canvas (30 quadros por segundo)
+        const fluxoDoCanvas = canvas.captureStream(30);
+        
+        // Prepara o RecordRTC com esse fluxo
+        gravador = new RecordRTC(fluxoDoCanvas, {
+            type: 'video',
+            mimeType: 'video/webm'
+        });
 
-          recorder.startRecording(); // Inicia a gravação
-          isRecording = true; // Atualiza o estado
-          recordButton.textContent = '⏹ Parar Gravação'; // Altera o texto
-          recordButton.style.backgroundColor = 'red'; // Destaca o botão
-          alert('Gravação iniciada!'); // Alerta o usuário
-        } else {
-          //  --- LÓGICA PARA PARAR GRAVAÇÃO --- 
-          
-          // Para a gravação e executa a função de callback
-          recorder.stopRecording(() => {
-            const blob = recorder.getBlob(); // Pega o arquivo de vídeo (Blob)
+        // Aperta o "Rec" e avisa o sistema
+        gravador.startRecording();
+        gravando = true;
+        
+        // Muda o visual do botão para o usuário saber que está gravando
+        btnVideo.textContent = '⏹ Parar Gravação';
+        btnVideo.style.backgroundColor = 'red';
+        btnVideo.style.color = 'white';
+
+    } else {
+        // --- AÇÃO B: DESLIGAR E SALVAR ---
+        
+        gravador.stopRecording(() => {
+            // Transforma os dados gravados em um arquivo (Blob)
+            const arquivoVideo = gravador.getBlob();
             
-            // Cria link temporário para download
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); // Cria link <a>
-            a.style.display = 'none'; // Oculta o link
-            a.href = url; // Define o URL
-            a.download = 'ar-video-recording.webm'; // Nome do arquivo
-            document.body.appendChild(a); // Adiciona ao corpo
-            a.click(); // Simula clique para download
-            window.URL.revokeObjectURL(url); // Libera o URL
+            // Cria o link de download
+            const urlVideo = URL.createObjectURL(arquivoVideo);
+            const linkDownload = document.createElement('a');
+            linkDownload.href = urlVideo;
+            linkDownload.download = 'meu-video-ar.webm';
             
-            isRecording = false; // Atualiza o estado
-            recordButton.textContent = '🔴 Iniciar Gravação'; // Restaura o texto
-            recordButton.style.backgroundColor = ''; // Remove o destaque
-            alert('Gravação parada e salva como ar-video-recording.webm!'); // Alerta
-          });
-        }
-      });
+            // Baixa o arquivo
+            linkDownload.click();
+            
+            // Reseta tudo para o estado original
+            gravando = false;
+            btnVideo.textContent = '🔴 Gravar Vídeo';
+            btnVideo.style.backgroundColor = 'white';
+            btnVideo.style.color = 'black';
+        });
+    }
+});
     </script>
   </body>
 </html>
