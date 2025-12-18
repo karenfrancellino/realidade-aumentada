@@ -32,9 +32,11 @@
   <!-- O que aparece na tela começa no body + margin:0 → tira margens da página + overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
   <body style="margin:0; overflow:hidden;">
     <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
-   <a-scene embedded 
-  renderer="preserveDrawingBuffer: true; alpha: true;" 
-  arjs="sourceType: webcam; videoTexture: true;"> <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
+   <a-scene 
+    embedded 
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+    renderer="preserveDrawingBuffer: true; antialias: true; alpha: true;"
+    vr-mode-ui="enabled: false"> <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
       <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
       <a-marker preset="hiro">
         <!-- Adiciona id ao personagem + OBJETO 3D + Um personagem droys posicionada 0.5m acima do marcador -->
@@ -66,7 +68,6 @@
     const personagem = document.querySelector('#personagem'); // Variavel personagem
     const btnFoto = document.querySelector('#btnScreenshot'); // Variavel print da tela
     const btnVideo = document.querySelector('#btnRecord'); // Variavel gravar tela 
-    const canvas = document.querySelector('canvas'); // Variavel responsavel por vincular as camadas de imagem, personage + camera
     const SickJacken_rigAction = "SickJacken_rigAction"; // Variavel para chamar açao do personagem
 
      // Ação de carregar o personagem
@@ -93,66 +94,65 @@ personagem.addEventListener('model-loaded', (e) => {
       // --------------------------------------------------------
       // Seleciona o elemento <a-scene> (a cena)
 btnFoto.addEventListener('click', () => {
+    // Localiza o canvas (usando o nome 'canvas' para bater com o if abaixo)
+    const canvas = document.querySelector('canvas'); 
     
-    // Tira a "foto" do que está passando no canvas agora
-    const dadosDaImagem = canvas.toDataURL("image/png");
-    // Cria um link invisível para "enganar" o navegador e baixar o arquivo
-    const linkTemporario = document.createElement('a');
-    linkTemporario.download = "minha-foto-ar.png"; // Nome do arquivo que será salvo
-    linkTemporario.href = dadosDaImagem;
-    // 3. Simula o clique no link para iniciar o download
-    linkTemporario.click();
+    if (canvas) {
+        // Transforma o que está na tela em imagem
+        const imagem = canvas.toDataURL("image/png");
+        
+        // Cria e aciona o link de download
+        const link = document.createElement('a');
+        link.download = "foto.png";
+        link.href = imagem;
+        link.click();
     
-    // Alerta de captura de tela 
-    alert('Foto capturada com sucesso!');
-}); 
-
+        // Alerta de sucesso
+        alert('Foto capturada com sucesso!');
+    } else {
+      // Alerta de falha
+        console.error("Canvas não encontrado no momento do clique.");
+    }
+});
       // --------------------------------------------------------
       // LÓGICA DE GRAVAÇÃO DE VÍDEO
       // --------------------------------------------------------
-let gravador; // Variável para armazenar a instância do RecordRTC
-let gravando = false;  // Variável de estado para saber se está gravando
-
 btnVideo.addEventListener('click', () => {
-     // --- LÓGICA PARA INICIAR GRAVAÇÃO ---
-    if (gravando === false) {
-        // --- AÇÃO A: LIGAR A GRAVAÇÃO ---
-        
-        // Captura o fluxo de imagens do canvas (30 quadros por segundo)
-        const fluxoDoCanvas = canvas.captureStream(30);
-        
-        // Prepara o RecordRTC com esse fluxo
-        gravador = new RecordRTC(fluxoDoCanvas, {
-            type: 'video',
-            mimeType: 'video/webm'
-        });
+    // Localiza o canvas exatamente no momento do clique
+    const canvas = document.querySelector('canvas');
+    
+    // Verifica se o canvas existe para não travar o navegador
+    if (!canvas) {
+        console.error("Canvas ainda não carregou");
+        return;
+    }
 
-        // Aperta o "Rec" e avisa o sistema
+    if (!gravando) {
+        // --- INICIAR GRAVAÇÃO ---
+        const fluxo = canvas.captureStream(30); // Usa o nome 'canvas' definido acima
+        gravador = new RecordRTC(fluxo, { 
+            type: 'video', 
+            mimeType: 'video/webm' 
+        });
+        
         gravador.startRecording();
         gravando = true;
         
-        // Muda o visual do botão para o usuário saber que está gravando
         btnVideo.textContent = '⏹ Parar Gravação';
         btnVideo.style.backgroundColor = 'red';
         btnVideo.style.color = 'white';
-
     } else {
-        // --- AÇÃO B: DESLIGAR E SALVAR ---
-        
+        // --- PARAR E SALVAR ---
         gravador.stopRecording(() => {
-            // Transforma os dados gravados em um arquivo (Blob)
             const arquivoVideo = gravador.getBlob();
-            
-            // Cria o link de download
             const urlVideo = URL.createObjectURL(arquivoVideo);
+            
             const linkDownload = document.createElement('a');
             linkDownload.href = urlVideo;
-            linkDownload.download = 'meu-video-ar.webm';
-            
-            // Baixa o arquivo
+            linkDownload.download = 'video-ar.webm';
             linkDownload.click();
             
-            // Reseta tudo para o estado original
+            // Reseta o botão
             gravando = false;
             btnVideo.textContent = '🔴 Gravar Vídeo';
             btnVideo.style.backgroundColor = 'white';
