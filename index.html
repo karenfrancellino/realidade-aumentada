@@ -64,108 +64,95 @@
 </div>
 
     <script>
-      // Variaveis globais
-    const personagem = document.querySelector('#personagem'); // Variavel personagem
-    const btnFoto = document.querySelector('#btnScreenshot'); // Variavel print da tela
-    const btnVideo = document.querySelector('#btnRecord'); // Variavel gravar tela 
-    const SickJacken_rigAction = "SickJacken_rigAction"; // Variavel para chamar açao do personagem
-
-      // Variáveis de controle da gravação
-    let gravador;
-    let gravando = false;
+      // Seleção de elementos do DOM e definição de estados globais
+      const personagem = document.querySelector('#personagem');
+      const btnFoto = document.querySelector('#btnScreenshot');
+      const btnVideo = document.querySelector('#btnRecord');
+      const SickJacken_rigAction = "SickJacken_rigAction";
       
-     // Ação de carregar o personagem
-    personagem.addEventListener('model-loaded', (e) => {
-  
-    const model = e.detail.model;  // Solicita o arquivo 3D
-    const animations = model.animations; // Solicita açao do personagem do aquivo 3D
-  
-// Ativa a animaçao se tiver
-    if (animations.length > 0) {
-      // Configura o componente 'animation-mixer' para tocar a animação desejada
-        personagem.setAttribute('animation-mixer', {
-            clip: SickJacken_rigAction, // Inicia a açao do personagem
-            loop: 'repeat' // Faz a animação repetir infinitamente
-       });
+      let gravador;
+      let gravando = false;
+
+      // Gerenciamento de ciclo de vida do modelo 3D e ativação de animações
+      personagem.addEventListener('model-loaded', (e) => {
+        const model = e.detail.model;
+        const animations = model.animations;
+        if (animations.length > 0) {
+          personagem.setAttribute('animation-mixer', {
+            clip: SickJacken_rigAction,
+            loop: 'repeat'
+          });
         }
-    });
+      });
 
-      // --------------------------------------------------------
-      // LÓGICA DE SCREENSHOT 
-      // --------------------------------------------------------
-      // Seleciona o elemento <a-scene> (a cena)
-btnFoto.addEventListener('click', () => {
-    // Localiza o canvas (usando o nome 'canvas' para bater com o if abaixo)
-        const scene = document.querySelector('a-scene');// Criar o arquivo
-        const video = document.querySelector('video'); // A webcam
-        const canvas = scene.canvas; // Onde está o 3D 
-    
-    if (canvas) {
-        // Transforma o que está na tela em imagem
-        const imagem = canvas.toDataURL("image/png");
+      // Implementação da captura de tela com fusão de buffers (Camada Vídeo + Camada Canvas)
+      btnFoto.addEventListener('click', () => {
+        const scene = document.querySelector('a-scene');
+        const video = document.querySelector('video'); 
+        const canvas = scene.canvas; 
 
-       // Cria um canva temporario de fusao
-        const outputCanvas = document.createElement('canvas');
-        outputCanvas.width = canvas.width;
-        outputCanvas.height = canvas.height;
-        const ctx = outputCanvas.getContext('2d');
+        if (canvas && video) {
+          // Inicialização de buffer temporário para composição de imagem
+          const outputCanvas = document.createElement('canvas');
+          outputCanvas.width = canvas.width;
+          outputCanvas.height = canvas.height;
+          const ctx = outputCanvas.getContext('2d');
 
-        // Desenha o vídeo da webcam primeiro
-        ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
-        // Desenha o conteúdo 3D por cima
-        ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
-        
-        // Cria e aciona o link de download
-        const link = document.createElement('a');
-        link.download = "foto-ar.png";
-        link.href = imagem;
-        link.click();
-    
-        // Alerta de sucesso
-        alert('Foto capturada con éxito!');
-    } else {
-      // Alerta de falha
-        console.error("Canvas no encontrado en el momento del click.");
-    }
-});
-      // --------------------------------------------------------
-      // LÓGICA DE GRAVAÇÃO DE VÍDEO
-      // --------------------------------------------------------
-btnVideo.addEventListener('click', () => {
+          // Renderização sequencial: fundo (webcam) seguido do foreground (3D)
+          ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
+          ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
+          
+          // Extração do buffer composto para formato DataURL e execução do download
+          const imagemFinal = outputCanvas.toDataURL("image/png");
+          const link = document.createElement('a');
+          link.download = "foto-ar.png";
+          link.href = imagemFinal;
+          link.click();
+          
+          alert('Foto capturada con éxito!');
+        } else {
+          console.error("Referência de Canvas ou Vídeo não encontrada.");
+        }
+      });
+
+      // Controle de fluxo de gravação de fluxo de mídia (MediaStream) do Canvas
+      btnVideo.addEventListener('click', () => {
         const canvas = document.querySelector('canvas');
         if (!canvas) return;
 
         if (!gravando) {
-            // INICIAR 
-            // Para pegar tudo, o ideal é usar o RecordRTC no canvas que fundimos
-            const fluxo = canvas.captureStream(30); 
-            gravador = new RecordRTC(fluxo, {
-                type: 'video',
-                mimeType: 'video/webm'
-            });
+          // Captura do stream de frames do canvas a 30 FPS e inicialização do RecordRTC
+          const fluxo = canvas.captureStream(30); 
+          gravador = new RecordRTC(fluxo, {
+            type: 'video',
+            mimeType: 'video/webm'
+          });
 
-            gravador.startRecording();
-            gravando = true;
-            btnVideo.textContent = '⏹ Detener Gravación';
-            btnVideo.style.backgroundColor = 'red';
-            btnVideo.style.color = 'white';
+          gravador.startRecording();
+          gravando = true;
+          
+          // Atualização visual do estado da interface
+          btnVideo.textContent = '⏹ Detener Gravación';
+          btnVideo.style.backgroundColor = 'red';
+          btnVideo.style.color = 'white';
         } else {
-            // PARAR
-            gravador.stopRecording(() => {
-                const arquivoVideo = gravador.getBlob();
-                const urlVideo = URL.createObjectURL(arquivoVideo);
-                const linkDownload = document.createElement('a');
-                linkDownload.href = urlVideo;
-                linkDownload.download = 'video-ar.webm';
-                linkDownload.click();
+          // Finalização da captura, geração de Blob e disponibilização para download
+          gravador.stopRecording(() => {
+            const arquivoVideo = gravador.getBlob();
+            const urlVideo = URL.createObjectURL(arquivoVideo);
+            const linkDownload = document.createElement('a');
+            linkDownload.href = urlVideo;
+            linkDownload.download = 'video-ar.webm';
+            linkDownload.click();
 
-                gravando = false;
-                btnVideo.textContent = '🔴 Grabar Vídeo';
-                btnVideo.style.backgroundColor = 'white';
-                btnVideo.style.color = 'black';
-            });
+            // Reset do estado global de gravação e interface
+            gravando = false;
+            btnVideo.textContent = '🔴 Grabar Vídeo';
+            btnVideo.style.backgroundColor = 'white';
+            btnVideo.style.color = 'black';
+          });
         }
-    });
-</script>
+      });
+    </script>
   </body>
 </html>
