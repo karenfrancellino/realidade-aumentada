@@ -1,3 +1,6 @@
+<!-- nao funciona o botao de grava video, a foto salva nao captura a tela so fica uma foto toda negra -->
+
+
 <!DOCTYPE html> <!-- Diz que o documento é HTML5 -->
 
 <html>
@@ -55,24 +58,28 @@
       <div style="position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 10000; pointer-events: none;">
      <!-- Botao screenshot -->
     <button id="btnScreenshot" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
-      📸 Tirar Foto
+      📸 Sacar Foto
     </button>
     <!-- Botao gravaçao de tela -->
     <button id="btnRecord" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
-      🔴 Gravar Vídeo
+      🔴 Grabar Vídeo
     </button>
 </div>
 
     <script>
-      // Variaveis
+      // Variaveis globais
     const personagem = document.querySelector('#personagem'); // Variavel personagem
     const btnFoto = document.querySelector('#btnScreenshot'); // Variavel print da tela
     const btnVideo = document.querySelector('#btnRecord'); // Variavel gravar tela 
     const SickJacken_rigAction = "SickJacken_rigAction"; // Variavel para chamar açao do personagem
 
+      // Variáveis de controle da gravação
+    let gravador;
+    let gravando = false;
+      
      // Ação de carregar o personagem
-personagem.addEventListener('model-loaded', (e) => {
-    
+    personagem.addEventListener('model-loaded', (e) => {
+  
     const model = e.detail.model;  // Solicita o arquivo 3D
     const animations = model.animations; // Solicita açao do personagem do aquivo 3D
   
@@ -82,12 +89,9 @@ personagem.addEventListener('model-loaded', (e) => {
         personagem.setAttribute('animation-mixer', {
             clip: SickJacken_rigAction, // Inicia a açao do personagem
             loop: 'repeat' // Faz a animação repetir infinitamente
-        });
-      
-        } else {
-          console.warn('Nenhuma animação encontrada no modelo.'); // Mensagem de aviso se nenhuma animação for encontrada
-        }
-      });
+       });
+        }
+    });
 
       // --------------------------------------------------------
       // LÓGICA DE SCREENSHOT 
@@ -95,71 +99,78 @@ personagem.addEventListener('model-loaded', (e) => {
       // Seleciona o elemento <a-scene> (a cena)
 btnFoto.addEventListener('click', () => {
     // Localiza o canvas (usando o nome 'canvas' para bater com o if abaixo)
-    const canvas = document.querySelector('canvas'); 
+    btnFoto.addEventListener('click', () => {
+        const scene = document.querySelector('a-scene');// Criar o arquivo
+        const video = document.querySelector('video'); // A webcam
+        const canvas = scene.canvas; // Onde está o 3D 
     
     if (canvas) {
         // Transforma o que está na tela em imagem
         const imagem = canvas.toDataURL("image/png");
+
+       // Cria um canva temporario de fusao
+        const outputCanvas = document.createElement('canvas');
+        outputCanvas.width = canvas.width;
+        outputCanvas.height = canvas.height;
+        const ctx = outputCanvas.getContext('2d');
+
+        // Desenha o vídeo da webcam primeiro
+        ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
+        // Desenha o conteúdo 3D por cima
+        ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
         
         // Cria e aciona o link de download
+        const imagem = outputCanvas.toDataURL("image/png");
         const link = document.createElement('a');
-        link.download = "foto.png";
+        link.download = "foto-ar.png";
         link.href = imagem;
         link.click();
     
         // Alerta de sucesso
-        alert('Foto capturada com sucesso!');
+        alert('Foto capturada con éxito!');
     } else {
       // Alerta de falha
-        console.error("Canvas não encontrado no momento do clique.");
+        console.error("Canvas no encontrado en el momento del click.");
     }
 });
       // --------------------------------------------------------
       // LÓGICA DE GRAVAÇÃO DE VÍDEO
       // --------------------------------------------------------
 btnVideo.addEventListener('click', () => {
-    // Localiza o canvas exatamente no momento do clique
-    const canvas = document.querySelector('canvas');
-    
-    // Verifica se o canvas existe para não travar o navegador
-    if (!canvas) {
-        console.error("Canvas ainda não carregou");
-        return;
-    }
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
 
-    if (!gravando) {
-        // --- INICIAR GRAVAÇÃO ---
-        const fluxo = canvas.captureStream(30); // Usa o nome 'canvas' definido acima
-        gravador = new RecordRTC(fluxo, { 
-            type: 'video', 
-            mimeType: 'video/webm' 
-        });
-        
-        gravador.startRecording();
-        gravando = true;
-        
-        btnVideo.textContent = '⏹ Parar Gravação';
-        btnVideo.style.backgroundColor = 'red';
-        btnVideo.style.color = 'white';
-    } else {
-        // --- PARAR E SALVAR ---
-        gravador.stopRecording(() => {
-            const arquivoVideo = gravador.getBlob();
-            const urlVideo = URL.createObjectURL(arquivoVideo);
-            
-            const linkDownload = document.createElement('a');
-            linkDownload.href = urlVideo;
-            linkDownload.download = 'video-ar.webm';
-            linkDownload.click();
-            
-            // Reseta o botão
-            gravando = false;
-            btnVideo.textContent = '🔴 Gravar Vídeo';
-            btnVideo.style.backgroundColor = 'white';
-            btnVideo.style.color = 'black';
-        });
-    }
-});
-    </script>
+        if (!gravando) {
+            // INICIAR 
+            // Para pegar tudo, o ideal é usar o RecordRTC no canvas que fundimos
+            const fluxo = canvas.captureStream(30); 
+            gravador = new RecordRTC(fluxo, {
+                type: 'video',
+                mimeType: 'video/webm'
+            });
+
+            gravador.startRecording();
+            gravando = true;
+            btnVideo.textContent = '⏹ Detener Gravación';
+            btnVideo.style.backgroundColor = 'red';
+            btnVideo.style.color = 'white';
+        } else {
+            // PARAR
+            gravador.stopRecording(() => {
+                const arquivoVideo = gravador.getBlob();
+                const urlVideo = URL.createObjectURL(arquivoVideo);
+                const linkDownload = document.createElement('a');
+                linkDownload.href = urlVideo;
+                linkDownload.download = 'video-ar.webm';
+                linkDownload.click();
+
+                gravando = false;
+                btnVideo.textContent = '🔴 Grabar Vídeo';
+                btnVideo.style.backgroundColor = 'white';
+                btnVideo.style.color = 'black';
+            });
+        }
+    });
+</script>
   </body>
 </html>
