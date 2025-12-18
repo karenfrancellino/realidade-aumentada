@@ -1,6 +1,3 @@
-<!-- nao funciona o botao de grava video, a foto salva nao captura a tela so fica uma foto toda negra -->
-
-
 <!DOCTYPE html> <!-- Diz que o documento é HTML5 -->
 
 <html>
@@ -99,7 +96,6 @@
       // Seleciona o elemento <a-scene> (a cena)
 btnFoto.addEventListener('click', () => {
     // Localiza o canvas (usando o nome 'canvas' para bater com o if abaixo)
-    btnFoto.addEventListener('click', () => {
         const scene = document.querySelector('a-scene');// Criar o arquivo
         const video = document.querySelector('video'); // A webcam
         const canvas = scene.canvas; // Onde está o 3D 
@@ -120,7 +116,6 @@ btnFoto.addEventListener('click', () => {
         ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
         
         // Cria e aciona o link de download
-        const imagem = outputCanvas.toDataURL("image/png");
         const link = document.createElement('a');
         link.download = "foto-ar.png";
         link.href = imagem;
