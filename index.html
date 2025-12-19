@@ -42,9 +42,9 @@
   <body style="margin:0; overflow:hidden;">
     <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
    <a-scene 
-  embedded 
-  arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true; displayHeight: window.innerHeight; displayWidth: window.innerWidth;" 
-  renderer="preserveDrawingBuffer: true; antialias: true; alpha: true;"
+ embedded 
+  arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;" 
+  renderer="preserveDrawingBuffer: true; antialias: true; alpha: true; logarithmicDepthBuffer: true;"
   vr-mode-ui="enabled: false"> <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
       <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
       <a-marker preset="hiro">
@@ -96,12 +96,12 @@
 
       // Implementação da captura de tela com fusão de buffers (Camada Vídeo + Camada Canvas)
       btnFoto.addEventListener('click', () => {
-        const scene = document.querySelector('a-scene');
-        const video = document.querySelector('video'); 
-        const canvas = scene.canvas; 
+    const scene = document.querySelector('a-scene');
+    const video = document.querySelector('video'); 
+    const canvas = scene.canvas;
 
         if (canvas && video) {
-          scene.renderer.render(scene.object3D, scene.camera);
+         scene.renderer.render(scene.object3D, scene.camera);
           // Inicialização de buffer temporário para composição de imagem
           const outputCanvas = document.createElement('canvas');
           outputCanvas.width = canvas.width;
