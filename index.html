@@ -27,6 +27,15 @@
     top: 0 !important;
     position: absolute !important;
   }
+  video {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: cover !important; /* Faz o vídeo preencher sem distorcer */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
 </style>
   </head>
   <!-- O que aparece na tela começa no body + margin:0 → tira margens da página + overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
@@ -34,7 +43,7 @@
     <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
    <a-scene 
   embedded 
-  arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;" 
+  arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true; displayHeight: window.innerHeight; displayWidth: window.innerWidth;" 
   renderer="preserveDrawingBuffer: true; antialias: true; alpha: true;"
   vr-mode-ui="enabled: false"> <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
       <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
