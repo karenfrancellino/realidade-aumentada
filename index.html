@@ -20,13 +20,12 @@
     <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
     <!-- Ferramenta para acionar tela ceheia nos dispositivos maiores-->
 <style>
-  canvas {
-    width: 100% !important;
-    height: 100% !important;
-    left: 0 !important;
-    top: 0 !important;
-    position: absolute !important;
-  }
+ canvas {
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute !important;
+        top: 0; left: 0;
+      }
   video {
     width: 100vw !important;
     height: 100vh !important;
@@ -49,6 +48,7 @@
   renderer="preserveDrawingBuffer: true; antialias: true; alpha: false; logarithmicDepthBuffer: true;sortObjects: true;"
   vr-mode-ui="enabled: false">  <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
 
+      
       <!-- Acdiciona iluminaçao virtual-->
   <a-entity light="type: ambient; intensity: 1.5;"></a-entity>
   <a-entity light="type: directional; intensity: 0.8;" position="1 1 1"></a-entity>
@@ -80,37 +80,35 @@
 </div>
 
     <script>
+       AFRAME.registerComponent('limpiar-profundidad', {
+        tick: function () {
+          // Esto obliga al motor a dibujar el personaje SIEMPRE encima del video
+          this.el.sceneEl.renderer.clearDepth();
+        }
+      });
       // Seleção de elementos do DOM e definição de estados globais
-      const personagem = document.querySelector('#personagem');
-      const btnFoto = document.querySelector('#btnScreenshot');
-      const btnVideo = document.querySelector('#btnRecord');
-      const SickJacken_rigAction = "SickJacken_rigAction";
-      
-      let gravador;
-      let gravando = false;
+        const personagem = document.querySelector('#personagem');
+        const btnFoto = document.querySelector('#btnScreenshot');
+        const btnVideo = document.querySelector('#btnRecord');
+        let gravador, gravando = false;
 
-      AFRAME.registerComponent('limpiar-profundidad', {
-  tick: function () {
-    this.el.sceneEl.renderer.clearDepth();
-  }
-});
       // Gerenciamento de ciclo de vida do modelo 3D e ativação de animações
       personagem.addEventListener('model-loaded', (e) => {
         const model = e.detail.model;
         const animations = model.animations;
         if (animations.length > 0) {
           personagem.setAttribute('animation-mixer', {
-            clip: SickJacken_rigAction,
+            clip: "SickJacken_rigAction",
             loop: 'repeat'
           });
         }
       });
 
       // Implementação da captura de tela com fusão de buffers (Camada Vídeo + Camada Canvas)
-      btnFoto.addEventListener('click', () => {
-    const scene = document.querySelector('a-scene');
-    const video = document.querySelector('video'); 
-    const canvas = scene.canvas;
+     btnFoto.addEventListener('click', () => {
+            const scene = document.querySelector('a-scene');
+            const video = document.querySelector('video');
+            const canvas = scene.canvas;
 
         if (canvas && video) {
          scene.renderer.render(scene.object3D, scene.camera);
@@ -125,11 +123,10 @@
           ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
           
           // Extração do buffer composto para formato DataURL e execução do download
-          const imagemFinal = outputCanvas.toDataURL("image/png");
-          const link = document.createElement('a');
-          link.download = "foto-ar.png";
-          link.href = imagemFinal;
-          link.click();
+         const link = document.createElement('a');
+                link.download = "foto-ar.png";
+                link.href = outputCanvas.toDataURL("image/png");
+                link.click();
           
           alert('Foto capturada con éxito!');
         } else {
@@ -139,39 +136,27 @@
 
       // Controle de fluxo de gravação de fluxo de mídia (MediaStream) do Canvas
       btnVideo.addEventListener('click', () => {
-        const canvas = document.querySelector('canvas');
-        if (!canvas) return;
-
-        if (!gravando) {
           // Captura do stream de frames do canvas a 30 FPS e inicialização do RecordRTC
-          const fluxo = canvas.captureStream(30); 
-          gravador = new RecordRTC(fluxo, {
-            type: 'video',
-            mimeType: 'video/webm'
-          });
-
-          gravador.startRecording();
-          gravando = true;
-          
-          // Atualização visual do estado da interface
-          btnVideo.textContent = '⏹ Detener Gravación';
-          btnVideo.style.backgroundColor = 'red';
-          btnVideo.style.color = 'white';
+         const canvas = document.querySelector('canvas');
+          if (!canvas) return;
+        
+            if (!gravando) {
+                const fluxo = canvas.captureStream(30);
+                gravador = new RecordRTC(fluxo, { type: 'video', mimeType: 'video/webm' });
+                gravador.startRecording();
+                gravando = true;
+                btnVideo.textContent = '⏹ Detener';
+                btnVideo.style.background = 'red';
         } else {
           // Finalização da captura, geração de Blob e disponibilização para download
           gravador.stopRecording(() => {
-            const arquivoVideo = gravador.getBlob();
-            const urlVideo = URL.createObjectURL(arquivoVideo);
-            const linkDownload = document.createElement('a');
-            linkDownload.href = urlVideo;
-            linkDownload.download = 'video-ar.webm';
-            linkDownload.click();
-
-            // Reset do estado global de gravação e interface
-            gravando = false;
-            btnVideo.textContent = '🔴 Grabar Vídeo';
-            btnVideo.style.backgroundColor = 'white';
-            btnVideo.style.color = 'black';
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(gravador.getBlob());
+                    link.download = 'video-ar.webm';
+                    link.click();
+                    gravando = false;
+                    btnVideo.textContent = '🔴 Grabar Vídeo';
+                    btnVideo.style.background = 'white';
           });
         }
       });
