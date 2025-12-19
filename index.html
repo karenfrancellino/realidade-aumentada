@@ -2,58 +2,165 @@
 
 <html>
   <head> <!-- Área de configurações e importações do projeto -->
-
     <!-- Define que o texto da página usa UTF-8 (acentos e emojis não quebram) -->
     <meta charset="utf-8">
-
     <!-- Ajusta a visualização em celulares para ocupar toda a tela -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
     <!-- Permite que a página funcione como "app" no iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-
     <!-- Permite que a página funcione como "app" no Android -->
     <meta name="mobile-web-app-capable" content="yes">
-
     <!-- Importa A-Frame → a biblioteca que cria objetos 3D -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <!-- Permite movimento do personagem -->
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
     <!-- Importa AR.js → a biblioteca que ativa a Realidade Aumentada -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-
+     <!-- Importa biblioteca para screenshot-->
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+    <!-- Ferramenta para acionar tela ceheia nos dispositivos maiores-->
+<style>
+ canvas {
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute !important;
+        top: 0; left: 0;
+      }
+  video {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: cover !important; /* Faz o vídeo preencher sem distorcer */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
+</style>
   </head>
-
-  <!-- O que aparece na tela começa no body -->
+  <!-- O que aparece na tela começa no body + margin:0 → tira margens da página + overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
   <body style="margin:0; overflow:hidden;">
-    <!-- margin:0 → tira margens da página -->
-    <!-- overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
-
-    <!-- Inicia a cena 3D + AR.js -->
+    <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
+  
     <a-scene 
-      embedded                      <!-- Impede modo VR e deixa cena embutida na página -->
-      arjs="sourceType: webcam;     <!-- Diz que a fonte do vídeo é a webcam/câmera -->
-           debugUIEnabled: false;"> <!-- Remove botões de debug da RA -->
+  limpiar-profundidad 
+  embedded 
+  arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;" 
+  renderer="preserveDrawingBuffer: true; antialias: true; alpha: false; logarithmicDepthBuffer: true;sortObjects: true;"
+  vr-mode-ui="enabled: false">  <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
 
-      <!-- MARCADOR HIRO -->
-      <!-- Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
-      <a-marker preset="hiro">
-
-        <!-- OBJETO 3D -->
-        <!-- Um pato amarelo posicionada 0.5m acima do marcador -->
-  <a-entity 
+      
+      <!-- Acdiciona iluminaçao virtual-->
+  <a-entity light="type: ambient; intensity: 1.5;"></a-entity>
+  <a-entity light="type: directional; intensity: 0.8;" position="1 1 1"></a-entity>
+     <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
+  <a-marker preset="hiro">
+    <!-- Adiciona id ao personagem + OBJETO 3D + Um personagem droys posicionada 0.5m acima do marcador -->
+      <a-entity 
     gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/Rubber_Duck.glb"
     scale="0.1 0.1 0.1"
     position="0 0 0"
     rotation="0 180 0">
   </a-entity>
 
-      </a-marker>
+  </a-marker>
+  
+  <a-entity camera></a-entity>
+</a-scene>
+     <!-- Ancora para os botoes -->
+      <div style="position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 10000; pointer-events: none;">
+     <!-- Botao screenshot -->
+    <button id="btnScreenshot" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
+      📸 Sacar Foto
+    </button>
+    <!-- Botao gravaçao de tela -->
+    <button id="btnRecord" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
+      🔴 Grabar Vídeo
+    </button>
+</div>
 
-      <!-- CÂMERA -->
-      <!-- A câmera usada para visualizar a RA -->
-      <a-entity camera></a-entity>
+    <script>
+     AFRAME.registerComponent('limpiar-profundidad', {
+  tick: function () {
+    this.el.sceneEl.renderer.clearDepth();
+  }
+}); //Limpa cena
+      
+      //Seleção de elementos do DOM e definição de estados globais
+        const personagem = document.querySelector('#personagem');
+        const btnFoto = document.querySelector('#btnScreenshot');
+        const btnVideo = document.querySelector('#btnRecord');
+        let gravador, gravando = false;
 
-    </a-scene>
+      // Gerenciamento de ciclo de vida do modelo 3D e ativação de animações
+      personagem.addEventListener('model-loaded', (e) => {
+        const model = e.detail.model;
+        const animations = model.animations;
+        if (animations.length > 0) {
+          personagem.setAttribute('animation-mixer', {
+            clip: "SickJacken_rigAction",
+            loop: 'repeat'
+          });
+        }
+      });
 
+      // Implementação da captura de tela com fusão de buffers (Camada Vídeo + Camada Canvas)
+     btnFoto.addEventListener('click', () => {
+            const scene = document.querySelector('a-scene');
+            const video = document.querySelector('video');
+            const canvas = scene.canvas;
+
+        if (canvas && video) {
+         scene.renderer.render(scene.object3D, scene.camera);
+          // Inicialização de buffer temporário para composição de imagem
+          const outputCanvas = document.createElement('canvas');
+          outputCanvas.width = canvas.width;
+          outputCanvas.height = canvas.height;
+          const ctx = outputCanvas.getContext('2d');
+
+          // Renderização sequencial: fundo (webcam) seguido do foreground (3D)
+          ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
+          ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
+          
+          // Extração do buffer composto para formato DataURL e execução do download
+         const link = document.createElement('a');
+                link.download = "foto-ar.png";
+                link.href = outputCanvas.toDataURL("image/png");
+                link.click();
+          
+          alert('Foto capturada con éxito!');
+        } else {
+          console.error("Referência de Canvas ou Vídeo não encontrada.");
+        }
+      });
+
+      // Controle de fluxo de gravação de fluxo de mídia (MediaStream) do Canvas
+      btnVideo.addEventListener('click', () => {
+          // Captura do stream de frames do canvas a 30 FPS e inicialização do RecordRTC
+         const canvas = document.querySelector('canvas');
+          if (!canvas) return;
+        
+            if (!gravando) {
+                const fluxo = canvas.captureStream(30);
+                gravador = new RecordRTC(fluxo, { type: 'video', mimeType: 'video/webm' });
+                gravador.startRecording();
+                gravando = true;
+                btnVideo.textContent = '⏹ Detener';
+                btnVideo.style.background = 'red';
+        } else {
+          // Finalização da captura, geração de Blob e disponibilização para download
+          gravador.stopRecording(() => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(gravador.getBlob());
+                    link.download = 'video-ar.webm';
+                    link.click();
+                    gravando = false;
+                    btnVideo.textContent = '🔴 Grabar Vídeo';
+                    btnVideo.style.background = 'white';
+          });
+        }
+      });
+    </script>
   </body>
 </html>
+ 
+     
