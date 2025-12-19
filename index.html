@@ -43,9 +43,10 @@
     <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
   
     <a-scene 
+  limpiar-profundidad 
   embedded 
   arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;" 
-  renderer="preserveDrawingBuffer: true; antialias: true; alpha: false; logarithmicDepthBuffer: true;"
+  renderer="preserveDrawingBuffer: true; antialias: true; alpha: false; logarithmicDepthBuffer: true;sortObjects: true;"
   vr-mode-ui="enabled: false">  <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
 
       <!-- Acdiciona iluminaçao virtual-->
@@ -88,6 +89,11 @@
       let gravador;
       let gravando = false;
 
+      AFRAME.registerComponent('limpiar-profundidad', {
+  tick: function () {
+    this.el.sceneEl.renderer.clearDepth();
+  }
+});
       // Gerenciamento de ciclo de vida do modelo 3D e ativação de animações
       personagem.addEventListener('model-loaded', (e) => {
         const model = e.detail.model;
