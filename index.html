@@ -11,9 +11,9 @@
     <!-- Permite que a página funcione como "app" no Android -->
     <meta name="mobile-web-app-capable" content="yes">
     <!-- Importa A-Frame → a biblioteca que cria objetos 3D -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <!-- Permite movimento do personagem -->
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.2.0/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
     <!-- Importa AR.js → a biblioteca que ativa a Realidade Aumentada -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
      <!-- Importa biblioteca para screenshot-->
@@ -57,8 +57,8 @@
     <!-- Adiciona id ao personagem + OBJETO 3D + Um personagem droys posicionada 0.5m acima do marcador -->
      <a-entity
       id="personagem"
-      gltf-model="gltf-model="https://ar-js-org.github.io/AR.js/aframe/examples/image-tracking/nft/trex/scene.gltf""
-      scale="0.5 0.5 0.5"
+      gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
+      scale="5 5 5"
       position="0 0.5 0"
       crossorigin="anonymous" 
       animation-mixer>
@@ -80,13 +80,13 @@
 </div>
 
     <script>
-       AFRAME.registerComponent('limpiar-profundidad', {
-        tick: function () {
-          // Esto obliga al motor a dibujar el personaje SIEMPRE encima del video
-          this.el.sceneEl.renderer.clearDepth();
-        }
-      });
-      // Seleção de elementos do DOM e definição de estados globais
+     AFRAME.registerComponent('limpiar-profundidad', {
+  tick: function () {
+    this.el.sceneEl.renderer.clearDepth();
+  }
+}); //Limpa cena
+      
+      //Seleção de elementos do DOM e definição de estados globais
         const personagem = document.querySelector('#personagem');
         const btnFoto = document.querySelector('#btnScreenshot');
         const btnVideo = document.querySelector('#btnRecord');
