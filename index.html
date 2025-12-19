@@ -55,12 +55,10 @@
      <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
   <a-marker preset="hiro">
     <!-- Adiciona id ao personagem + OBJETO 3D + Um personagem droys posicionada 0.5m acima do marcador -->
-      <a-entity 
-    gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/Rubber_Duck.glb"
-    scale="0.1 0.1 0.1"
-    position="0 0 0"
-    rotation="0 180 0">
-  </a-entity>
+      <a-box 
+        position="0 0.5 0" 
+        material="color: red;">
+        </a-box>
 
   </a-marker>
   
