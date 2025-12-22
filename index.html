@@ -54,8 +54,8 @@
         <a-entity 
           id="personagem"  
           gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-          scale="1 1 1"  
-          position="0 0 0" 
+          scale="2 2 2"  
+          position="0 0.5 0" 
           animation-mixer> <!-- Ativa o sistema de animação do GLB -->
         </a-entity>
 
@@ -89,7 +89,7 @@
         // Se houver animações, toca automaticamente a primeira
         if (animations.length > 0) {
           entity.setAttribute('animation-mixer', {
-            clip: animations[0].name,  // Nome da animação a tocar
+            clip: SickJacken_rigAction,  // Nome da animação a tocar
             loop: 'repeat'             // Faz a animação repetir infinitamente
           });
         } else {
