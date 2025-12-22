@@ -41,17 +41,19 @@
     <script>
       // Toca a primeira animação automaticamente
       const entity = document.querySelector('#personagem');
-      entity.addEventListener('model-loaded', (e) => {
-        const model = e.detail.model;
-        const animations = model.animations;
-        console.log('Animações disponíveis:', animations.map(a => a.name));
+entity.addEventListener('model-loaded', (e) => {
+  const model = e.detail.model;
+  const animations = model.animations;
+  console.log('Animações disponíveis:', animations.map(a => a.name));
 
-        if (animations.length > 0) {
-          entity.setAttribute('animation-mixer', {
-            clip: animations[0].name,
-            loop: 'repeat'
-          });
-        } else {
+        i  // Toca a animação específica pelo nome
+  if (animations && animations.length > 0) {
+    entity.setAttribute('animation-mixer', {
+      clip: "SickJacken_rigAction", // nome exato da animação
+      loop: 'repeat',
+      timeScale: 1
+    });
+  }else {
           console.warn('Nenhuma animação encontrada no modelo.');
         }
       });
@@ -67,36 +69,47 @@
       // Gravação
       let recorder;
       const recordButton = document.querySelector('#recordButton');
-      let isRecording = false;
+let recorder, isRecording = false;
 
-      recordButton.addEventListener('click', () => {
-        const canvas = document.querySelector('canvas');
-        if (!isRecording) {
-          const canvasStream = canvas.captureStream();
-          recorder = new RecordRTC(canvasStream, { type:'video', mimeType:'video/webm' });
-          recorder.startRecording();
-          isRecording = true;
-          recordButton.textContent = '⏹ Parar Gravação';
-          recordButton.style.backgroundColor = 'red';
-          alert('Gravação iniciada!');
-        } else {
-          recorder.stopRecording(() => {
-            const blob = recorder.getBlob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = 'ar-video-recording.webm';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            isRecording = false;
-            recordButton.textContent = '🔴 Iniciar Gravação';
-            recordButton.style.backgroundColor = '';
-            alert('Gravação parada e salva como ar-video-recording.webm!');
-          });
-        }
+recordButton.addEventListener('click', () => {
+  if (!isRecording) {
+    // Inicia gravação usando getDisplayMedia
+    navigator.mediaDevices.getDisplayMedia({ video: true })
+      .then(stream => {
+        recorder = new MediaRecorder(stream);
+        const chunks = [];
+
+        recorder.ondataavailable = e => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'ar-video.webm';
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        recorder.start();
+        isRecording = true;
+        recordButton.textContent = '⏹ Parar Gravação';
+        recordButton.style.backgroundColor = 'red';
+      })
+      .catch(err => {
+        console.error('Erro ao capturar tela:', err);
+        alert('Erro ao iniciar a gravação.');
       });
+  } else {
+    // Para a gravação
+    recorder.stop();
+    isRecording = false;
+    recordButton.textContent = '🔴 Iniciar Gravação';
+    recordButton.style.backgroundColor = '';
+  }
+});
     </script>
 
   </body>
