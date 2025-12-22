@@ -51,7 +51,7 @@ entity.addEventListener('model-loaded', (e) => {
        // Toca a animação específica pelo nome
   if (animations.length > 0) {
     entity.setAttribute('animation-mixer', {
-      clip: animations[0].name, // nome exato da animação
+      clip: SickJacken_rigAction, // nome exato da animação
       loop: 'repeat',
     });
   }else {
