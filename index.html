@@ -22,10 +22,10 @@
     <!-- Permite que a página funcione como "app" em Android -->
 
     <!-- Importa A-Frame (biblioteca 3D) -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
 
     <!-- Importa AR.js (Realidade Aumentada) -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
     <!-- Importa biblioteca para screenshot-->
     <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
@@ -80,7 +80,8 @@
         if (animations.length > 0) {
           entity.setAttribute('animation-mixer', {
             clip: 'SickJacken_rigAction',  // Nome da animação a tocar
-            loop: 'repeat'             // Faz a animação repetir infinitamente
+            loop: 'repeat',
+             timeScale: 1 // Faz a animação repetir infinitamente
           });
         } else {
           console.warn('Nenhuma animação encontrada no modelo.');
