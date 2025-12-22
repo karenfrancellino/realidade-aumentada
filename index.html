@@ -46,7 +46,7 @@ entity.addEventListener('model-loaded', (e) => {
   const animations = model.animations;
   console.log('Animações disponíveis:', animations.map(a => a.name));
 
-        i  // Toca a animação específica pelo nome
+       // Toca a animação específica pelo nome
   if (animations && animations.length > 0) {
     entity.setAttribute('animation-mixer', {
       clip: "SickJacken_rigAction", // nome exato da animação
@@ -67,49 +67,34 @@ entity.addEventListener('model-loaded', (e) => {
       });
 
       // Gravação
-      let recorder;
-      const recordButton = document.querySelector('#recordButton');
-let recorder, isRecording = false;
-
+     const canvas = document.querySelector('canvas');
 recordButton.addEventListener('click', () => {
   if (!isRecording) {
-    // Inicia gravação usando getDisplayMedia
-    navigator.mediaDevices.getDisplayMedia({ video: true })
-      .then(stream => {
-        recorder = new MediaRecorder(stream);
-        const chunks = [];
-
-        recorder.ondataavailable = e => {
-          if (e.data.size > 0) chunks.push(e.data);
-        };
-
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'ar-video.webm';
-          a.click();
-          URL.revokeObjectURL(url);
-        };
-
-        recorder.start();
-        isRecording = true;
-        recordButton.textContent = '⏹ Parar Gravação';
-        recordButton.style.backgroundColor = 'red';
-      })
-      .catch(err => {
-        console.error('Erro ao capturar tela:', err);
-        alert('Erro ao iniciar a gravação.');
-      });
+    const stream = canvas.captureStream();
+    recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ar-video.webm';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    recorder.start();
+    isRecording = true;
+    recordButton.textContent = '⏹ Parar Gravação';
+    recordButton.style.backgroundColor = 'red';
   } else {
-    // Para a gravação
     recorder.stop();
     isRecording = false;
     recordButton.textContent = '🔴 Iniciar Gravação';
     recordButton.style.backgroundColor = '';
   }
 });
+
     </script>
 
   </body>
