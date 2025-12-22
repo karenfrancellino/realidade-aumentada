@@ -1,7 +1,7 @@
-<!DOCTYPE html> <!-- Diz que o documento é HTML5 -->
-
-<html>
-  <head> <!-- Área de configurações e importações do projeto -->
+ <!DOCTYPE html>
+<html lang="es">
+  
+    <head> <!-- Área de configurações e importações do projeto -->
     <!-- Define que o texto da página usa UTF-8 (acentos e emojis não quebram) -->
     <meta charset="utf-8">
     <!-- Ajusta a visualização em celulares para ocupar toda a tela -->
@@ -42,10 +42,16 @@
     <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
   
     <a-scene 
-  limpiar-profundidad 
+  limpiar-profundidad                      
   embedded 
   arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;" 
-  renderer="preserveDrawingBuffer: true; antialias: true; alpha: false; logarithmicDepthBuffer: true;sortObjects: true;"
+      
+  renderer="
+      preserveDrawingBuffer: true;
+      antialias: true;
+      alpha: false;
+      logarithmicDepthBuffer: true;
+      sortObjects: true;"
   vr-mode-ui="enabled: false">  <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
 
       
@@ -60,8 +66,8 @@
       gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
       scale="5 5 5"
       position="0 0.5 0"
-      crossorigin="anonymous" 
-      animation-mixer>
+      crossorigin="anonymous"
+      >
     </a-entity>
   </a-marker>
   
@@ -80,6 +86,8 @@
 </div>
 
     <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        
      AFRAME.registerComponent('limpiar-profundidad', {
   tick: function () {
     this.el.sceneEl.renderer.clearDepth();
@@ -96,70 +104,40 @@
       personagem.addEventListener('model-loaded', (e) => {
         const model = e.detail.model;
         const animations = model.animations;
-        if (animations.length > 0) {
+        console.log('Animações encontradas:', animations);
+        
+         if (animations && animations.length > 0)  {
           personagem.setAttribute('animation-mixer', {
-            clip: "SickJacken_rigAction",
-            loop: 'repeat'
-          });
+    clip: "SickJacken_rigAction",
+    loop: 'repeat',
+    timeScale: 1
+});
+
         }
       });
 
       // Implementação da captura de tela com fusão de buffers (Camada Vídeo + Camada Canvas)
-     btnFoto.addEventListener('click', () => {
-            const scene = document.querySelector('a-scene');
-            const video = document.querySelector('video');
-            const canvas = scene.canvas;
+    btnFoto.addEventListener('click', () => {
+  const canvas = document.querySelector('a-scene').canvas;
+  if (!canvas) return;
 
-        if (canvas && video) {
-         scene.renderer.render(scene.object3D, scene.camera);
-          // Inicialização de buffer temporário para composição de imagem
-          const outputCanvas = document.createElement('canvas');
-          outputCanvas.width = canvas.width;
-          outputCanvas.height = canvas.height;
-          const ctx = outputCanvas.getContext('2d');
-
-          // Renderização sequencial: fundo (webcam) seguido do foreground (3D)
-          ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
-          ctx.drawImage(canvas, 0, 0, outputCanvas.width, outputCanvas.height);
-          
-          // Extração do buffer composto para formato DataURL e execução do download
-         const link = document.createElement('a');
-                link.download = "foto-ar.png";
-                link.href = outputCanvas.toDataURL("image/png");
-                link.click();
-          
-          alert('Foto capturada con éxito!');
-        } else {
-          console.error("Referência de Canvas ou Vídeo não encontrada.");
-        }
-      });
-
+  const link = document.createElement('a');
+  link.download = 'foto-ar.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+        
       // Controle de fluxo de gravação de fluxo de mídia (MediaStream) do Canvas
       btnVideo.addEventListener('click', () => {
-          // Captura do stream de frames do canvas a 30 FPS e inicialização do RecordRTC
-         const canvas = document.querySelector('canvas');
-          if (!canvas) return;
-        
-            if (!gravando) {
-                const fluxo = canvas.captureStream(30);
-                gravador = new RecordRTC(fluxo, { type: 'video', mimeType: 'video/webm' });
-                gravador.startRecording();
-                gravando = true;
-                btnVideo.textContent = '⏹ Detener';
-                btnVideo.style.background = 'red';
-        } else {
-          // Finalização da captura, geração de Blob e disponibilização para download
-          gravador.stopRecording(() => {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(gravador.getBlob());
-                    link.download = 'video-ar.webm';
-                    link.click();
-                    gravando = false;
-                    btnVideo.textContent = '🔴 Grabar Vídeo';
-                    btnVideo.style.background = 'white';
-          });
-        }
-      });
-    </script>
-  </body>
+    alert(
+      '⚠️ Gravação integrada não é suportada no Safari iOS.\n\n' +
+      'Use a gravação de tela nativa do iPhone.\n' +
+      'No Android / Chrome funciona.'
+    );
+  });
+
+});
+</script>
+
+</body>
 </html>
