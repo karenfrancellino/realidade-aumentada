@@ -1,143 +1,103 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
-  
-    <head> <!-- Área de configurações e importações do projeto -->
-    <!-- Define que o texto da página usa UTF-8 (acentos e emojis não quebram) -->
+  <head>
     <meta charset="utf-8">
-    <!-- Ajusta a visualização em celulares para ocupar toda a tela -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <!-- Permite que a página funcione como "app" no iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <!-- Permite que a página funcione como "app" no Android -->
     <meta name="mobile-web-app-capable" content="yes">
-    <!-- Importa A-Frame → a biblioteca que cria objetos 3D -->
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <!-- Permite movimento do personagem -->
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-    <!-- Importa AR.js → a biblioteca que ativa a Realidade Aumentada -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-     <!-- Importa biblioteca para screenshot-->
-    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
-    <!-- Ferramenta para acionar tela ceheia nos dispositivos maiores-->
-<style>
- canvas {
-        width: 100% !important;
-        height: 100% !important;
-        position: absolute !important;
-        top: 0; left: 0;
-      }
-  video {
-    width: 100vw !important;
-    height: 100vh !important;
-    object-fit: cover !important; /* Faz o vídeo preencher sem distorcer */
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: -1;
-  }
-</style>
-  </head>
-  <!-- O que aparece na tela começa no body + margin:0 → tira margens da página + overflow:hidden → remove barras de rolagem para a câmera ocupar a tela -->
-  <body style="margin:0; overflow:hidden;">
-    <!-- Inicia a cena 3D + AR.js + Impede modo VR e deixa cena embutida na página + Diz que a fonte do vídeo é a webcam/câmera -->
-  
-    <a-scene 
-  limpiar-profundidad                      
-  embedded 
-  arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;" 
-      
-  renderer="
-      preserveDrawingBuffer: true;
-      antialias: true;
-      alpha: false;
-      logarithmicDepthBuffer: true;
-      sortObjects: true;"
-  vr-mode-ui="enabled: false">  <!-- videoTexture: true funde a cena do personagem com a da camera + preserveDrawingBuffer: true;Impede que o navegador limpe o buffer do desenho logo após renderizar -->
 
-      
-      <!-- Acdiciona iluminaçao virtual-->
-  <a-entity light="type: ambient; intensity: 1.5;"></a-entity>
-  <a-entity light="type: directional; intensity: 0.8;" position="1 1 1"></a-entity>
-     <!-- MARCADOR HIRO + Quando a câmera detectar o marcador Hiro, tudo dentro aparece -->
-  <a-marker preset="hiro">
-    <!-- Adiciona id ao personagem + OBJETO 3D + Um personagem droys posicionada 0.5m acima do marcador -->
-     <a-entity
-      id="personagem"
-      gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-      scale="3 3 3"
-      position="0 0.5 0"
-      crossorigin="anonymous"
-      >
-    </a-entity>
-  </a-marker>
-  
-  <a-entity camera></a-entity>
-</a-scene>
-     <!-- Ancora para os botoes -->
-      <div style="position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 10000; pointer-events: none;">
-     <!-- Botao screenshot -->
-    <button id="btnScreenshot" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
+    <!-- Bibliotecas -->
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+  </head>
+
+  <body style="margin:0; overflow:hidden;">
+
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+
+      <!-- Marcador Hiro -->
+      <a-marker preset="hiro">
+        <a-entity
+          id="personagem"
+          gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
+          scale="1 1 1"
+          position="0 0 0"
+          animation-mixer>
+        </a-entity>
+      </a-marker>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <!-- Botões -->
+    <button id="screenshotButton" style="position:absolute; bottom:10px; left:10px; z-index:999; padding:10px;">
       📸 Sacar Foto
     </button>
-    <!-- Botao gravaçao de tela -->
-    <button id="btnRecord" style="pointer-events: auto; padding: 15px 20px; background: white; border-radius: 12px; border: 2px solid #333; font-weight: bold; box-shadow: 0px 4px 6px rgba(0,0,0,0.2);">
+    <button id="recordButton" style="position:absolute; bottom:10px; right:10px; z-index:999; padding:10px;">
       🔴 Grabar Vídeo
     </button>
-</div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        
-     AFRAME.registerComponent('limpiar-profundidad', {
-  tick: function () {
-    this.el.sceneEl.renderer.clearDepth();
-  }
-}); //Limpa cena
-      
-      //Seleção de elementos do DOM e definição de estados globais
-        const personagem = document.querySelector('#personagem');
-        const btnFoto = document.querySelector('#btnScreenshot');
-        const btnVideo = document.querySelector('#btnRecord');
-        let gravador, gravando = false;
-
-      // Gerenciamento de ciclo de vida do modelo 3D e ativação de animações
-      personagem.addEventListener('model-loaded', (e) => {
+      // Toca a primeira animação automaticamente
+      const entity = document.querySelector('#personagem');
+      entity.addEventListener('model-loaded', (e) => {
         const model = e.detail.model;
         const animations = model.animations;
-        console.log('Animações encontradas:', animations);
-        
-         if (animations && animations.length > 0)  {
-          personagem.setAttribute('animation-mixer', {
-    clip: "SickJacken_rigAction",
-    loop: 'repeat',
-    timeScale: 1
-});
+        console.log('Animações disponíveis:', animations.map(a => a.name));
 
+        if (animations.length > 0) {
+          entity.setAttribute('animation-mixer', {
+            clip: animations[0].name,
+            loop: 'repeat'
+          });
+        } else {
+          console.warn('Nenhuma animação encontrada no modelo.');
         }
       });
 
-      // Implementação da captura de tela com fusão de buffers (Camada Vídeo + Camada Canvas)
-    btnFoto.addEventListener('click', () => {
-  const canvas = document.querySelector('a-scene').canvas;
-  if (!canvas) return;
+      // Screenshot
+      const scene = document.querySelector('a-scene');
+      const screenshotButton = document.querySelector('#screenshotButton');
+      screenshotButton.addEventListener('click', () => {
+        scene.components.screenshot.capture('filename', 'ar-screenshot.png');
+        alert('Screenshot capturado e salvo como ar-screenshot.png!');
+      });
 
-  const link = document.createElement('a');
-  link.download = 'foto-ar.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-});
-        
-      // Controle de fluxo de gravação de fluxo de mídia (MediaStream) do Canvas
-      btnVideo.addEventListener('click', () => {
-    alert(
-      '⚠️ Gravação integrada não é suportada no Safari iOS.\n\n' +
-      'Use a gravação de tela nativa do iPhone.\n' +
-      'No Android / Chrome funciona.'
-    );
-  });
+      // Gravação
+      let recorder;
+      const recordButton = document.querySelector('#recordButton');
+      let isRecording = false;
 
-});
-</script>
+      recordButton.addEventListener('click', () => {
+        const canvas = document.querySelector('canvas');
+        if (!isRecording) {
+          const canvasStream = canvas.captureStream();
+          recorder = new RecordRTC(canvasStream, { type:'video', mimeType:'video/webm' });
+          recorder.startRecording();
+          isRecording = true;
+          recordButton.textContent = '⏹ Parar Gravação';
+          recordButton.style.backgroundColor = 'red';
+          alert('Gravação iniciada!');
+        } else {
+          recorder.stopRecording(() => {
+            const blob = recorder.getBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'ar-video-recording.webm';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            isRecording = false;
+            recordButton.textContent = '🔴 Iniciar Gravação';
+            recordButton.style.backgroundColor = '';
+            alert('Gravação parada e salva como ar-video-recording.webm!');
+          });
+        }
+      });
+    </script>
 
-</body>
+  </body>
 </html>
