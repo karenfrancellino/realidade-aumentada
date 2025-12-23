@@ -15,6 +15,7 @@
   <body style="margin:0; overflow:hidden;">
 
     <a-scene embedded 
+      renderer="preserveDrawingBuffer: true"
       arjs="sourceType: webcam; 
       debugUIEnabled: false;">
 
@@ -34,29 +35,22 @@
 
     <!-- Botões -->
     <button id="screenshotButton" style="position:absolute; bottom:10px; left:10px; z-index:999; padding:10px;">
-      📸 Sacar Foto
+      📸 Hacer foto
     </button>
     <button id="recordButton" style="position:absolute; bottom:10px; right:10px; z-index:999; padding:10px;">
-      🔴 Grabar Vídeo
+      🔴 Grabar vídeo
     </button>
 
     <script>
       // Toca a primeira animação automaticamente
-      const entity = document.querySelector('#personagem');
-entity.addEventListener('model-loaded', (e) => {
-  const model = e.detail.model;
-  const animations = model.animations;
-  console.log('Animações disponíveis:', animations.map(a => a.name));
+   const entity = document.querySelector('#personagem');
 
-       // Toca a animação específica pelo nome
-  if (animations.length > 0) {
-    entity.setAttribute('animation-mixer', {
-      clip: 'SickJacken_rigAction', 
-      loop: 'repeat',
-      timeScale: 1      
-    });
-  }
-      });
+  entity.addEventListener('model-loaded', e => {
+    console.log(
+      'Animações disponíveis:',
+      e.detail.model.animations.map(a => a.name)
+    );
+  });
 
       // Screenshot
       const scene = document.querySelector('a-scene');
@@ -70,38 +64,48 @@ const link = document.createElement('a');
 link.href = canvas.toDataURL('image/png');
 link.download = 'ar-screenshot.png';
 link.click();
-        screenshotButton.textContent = '✅ Foto salva';
+        screenshotButton.textContent = '✅ Foto guardada';
 setTimeout(() => {
-  screenshotButton.textContent = '📸 Sacar Foto';
+  screenshotButton.textContent = '📸 Hacer Foto';
 }, 1500);
-
       });
 
       // Gravação
-      const canvas = document.querySelector('a-scene').renderer.domElement;
+      const recordButton = document.querySelector('#recordButton');
+  let recorder;
+  let isRecording = false;
 recordButton.addEventListener('click', () => {
+   if (!scene.renderer) return;
+
+    const canvas = scene.renderer.domElement;
+
   if (!isRecording) {
     const stream = canvas.captureStream();
-    recorder = new MediaRecorder(stream);
     const chunks = [];
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+     recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => { 
+      if (e.data.size > 0) chunks.push(e.data);
+      };
+    
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
+      
       const a = document.createElement('a');
       a.href = url;
       a.download = 'ar-video.webm';
       a.click();
       URL.revokeObjectURL(url);
     };
+    
     recorder.start();
     isRecording = true;
-    recordButton.textContent = '⏹ Parar Gravação';
+    recordButton.textContent = '⏹ Detener grabación';
     recordButton.style.backgroundColor = 'red';
   } else {
     recorder.stop();
     isRecording = false;
-    recordButton.textContent = '🔴 Iniciar Gravação';
+    recordButton.textContent = '🔴 Grabar vídeo';
     recordButton.style.backgroundColor = '';
   }
 });
