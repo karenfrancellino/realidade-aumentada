@@ -1,89 +1,142 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script> <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script> <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script> </head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-<body style="margin:0; overflow:hidden;"> <a-scene 
-    embedded 
-    renderer="preserveDrawingBuffer: true; alpha: true;" 
-    arjs="sourceType: webcam; debugUIEnabled: false;">
+  <!-- A-Frame principal -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 
-    <a-marker preset="hiro"> <a-entity
-        id="personagem"
-        gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-        scale="2 2 2"
-        position="0 0.5 0"
-        animation-mixer="clip: SickJacken_rigAction; loop: repeat"> </a-entity>
-    </a-marker>
-    
-    <a-entity camera></a-entity> </a-scene>
+  <!-- AR.js versão fixa (estável) -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
+  <!-- A-Frame Extras (opcional, mas útil para utilidades) -->
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+</head>
+
+<body style="margin:0; overflow:hidden;">
+
+  <!-- ===========================
+       ESCENA AFRAME + AR
+       =========================== -->
+  <a-scene
+      embedded
+      renderer="preserveDrawingBuffer: true; alpha: true;" 
+      arjs="sourceType: webcam; debugUIEnabled: false;">
+
+      <!-- Marcador Hiro -->
+      <a-marker preset="hiro">
+        <!-- Entidade 3D com animação -->
+        <a-entity
+          id="personagem"
+          gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
+          scale="2 2 2"
+          position="0 0.5 0"
+          animation-mixer="clip: SickJacken_rigAction; loop: repeat; timeScale: 1">
+        </a-entity>
+      </a-marker>
+
+      <!-- Camera principal -->
+      <a-entity camera></a-entity>
+  </a-scene>
+
+  <!-- ===========================
+       BOTONES DE FOTO Y VÍDEO
+       =========================== -->
   <div style="position:absolute; bottom:20px; width:100%; display:flex; justify-content:space-around; z-index:999;">
-    <button id="btnFoto" style="padding:15px; background:white; border-radius:10px;">📸 Foto</button>
+    <button id="btnFoto" style="padding:15px; background:white; border-radius:10px;">📸 Hacer foto</button>
     <button id="btnVideo" style="padding:15px; background:white; border-radius:10px;">🔴 Vídeo</button>
   </div>
 
+  <!-- ===========================
+       SCRIPT PRINCIPAL
+       =========================== -->
   <script>
-    const sceneEl = document.querySelector('a-scene'); // Seleciona a cena
-    const btnFoto = document.querySelector('#btnFoto'); // Seleciona botão foto
-    const btnVideo = document.querySelector('#btnVideo'); // Seleciona botão vídeo
-    let mediaRecorder; // Variável para o gravador
-    let chunks = []; // Array para dados do vídeo
+    // ===== Selección de elementos
+    const sceneEl = document.querySelector('a-scene'); // Selecciona la escena A-Frame
+    const btnFoto = document.querySelector('#btnFoto'); // Botón de tomar foto
+    const btnVideo = document.querySelector('#btnVideo'); // Botón de grabar vídeo
+    let mediaRecorder; // Variable para el grabador de vídeo
+    let chunks = [];   // Array donde se almacenan los fragmentos de vídeo
 
-    // --- FUNÇÃO PARA PEGAR FOTO (Câmera + 3D) ---
-    btnFoto.addEventListener('click', () => {
-      const video = document.querySelector('video'); // Acessa o stream da webcam
-      const canvas3d = sceneEl.canvas; // Acessa o canvas onde o boneco está
-      
-      const merger = document.createElement('canvas'); // Cria um canvas temporário
-      merger.width = canvas3d.width; // Define largura igual ao 3D
-      merger.height = canvas3d.height; // Define altura igual ao 3D
-      const ctx = merger.getContext('2d'); // Contexto de desenho 2D
+    // ===== LOG DE ANIMACIÓN
+    document.querySelector('#personagem').addEventListener('model-loaded', (e) => {
+      // Se dispara cuando el modelo .glb se ha cargado completamente
+      console.log('Modelo cargado correctamente');
 
-      ctx.drawImage(video, 0, 0, merger.width, merger.height); // Passo 1: Desenha a webcam ao fundo
-      ctx.drawImage(canvas3d, 0, 0); // Passo 2: Desenha o personagem por cima
-
-      const link = document.createElement('a'); // Link para download
-      link.download = 'ar-foto.png'; // Nome do arquivo
-      link.href = merger.toDataURL('image/png'); // Converte para imagem
-      link.click(); // Dispara o download
-    });
-
-    // --- FUNÇÃO PARA VÍDEO ---
-    btnVideo.addEventListener('click', () => {
-      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-        chunks = []; // Reseta os dados
-        const stream = sceneEl.canvas.captureStream(30); // Captura o canvas em 30 FPS
-        mediaRecorder = new MediaRecorder(stream); // Inicia o gravador
-
-        mediaRecorder.ondataavailable = e => chunks.push(e.data); // Salva pacotes de vídeo
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' }); // Gera o arquivo final
-          const url = URL.createObjectURL(blob); // Cria link do vídeo
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'ar-video.webm';
-          a.click(); // Baixa o vídeo
-        };
-
-        mediaRecorder.start(); // Começa a gravar
-        btnVideo.style.background = 'red'; // Muda cor do botão
-        btnVideo.textContent = '⏹ Parar';
+      const model = e.detail.model;
+      if (model.animations.length > 0) {
+        // Listamos los nombres de las animaciones disponibles
+        console.log('Animaciones disponibles:', model.animations.map(a => a.name));
       } else {
-        mediaRecorder.stop(); // Para a gravação
-        btnVideo.style.background = 'white';
-        btnVideo.textContent = '🔴 Vídeo';
+        console.error('Este modelo no tiene animaciones internas');
       }
     });
 
-    // --- LOG DE DEPURAÇÃO (Verifica se o modelo carregou e tem animação) ---
-    document.querySelector('#personagem').addEventListener('model-loaded', (e) => {
-      console.log('Modelo OK!'); // Confirma que o arquivo .glb foi lido
-      const model = e.detail.model;
-      if (model.animations.length > 0) {
-        console.log('Animações:', model.animations.map(a => a.name)); // Lista nomes das animações no console
+    // ===== FUNCIÓN DE FOTO (cámara + 3D)
+    btnFoto.addEventListener('click', () => {
+      if (!sceneEl.renderer) return; // Verifica que el renderer esté listo
+
+      // Obtenemos el vídeo de la cámara del AR.js
+      const video = sceneEl.systems.arjs.arController.video;
+
+      // Obtenemos el canvas donde se renderiza el 3D
+      const canvas3d = sceneEl.renderer.domElement;
+
+      // Creamos un canvas temporal para fusionar cámara + 3D
+      const merger = document.createElement('canvas');
+      merger.width = canvas3d.width;
+      merger.height = canvas3d.height;
+
+      const ctx = merger.getContext('2d');
+      // Paso 1: dibujamos el vídeo de la cámara como fondo
+      ctx.drawImage(video, 0, 0, merger.width, merger.height);
+      // Paso 2: dibujamos el canvas 3D encima
+      ctx.drawImage(canvas3d, 0, 0);
+
+      // Creamos un enlace para descargar la imagen
+      const link = document.createElement('a');
+      link.download = 'ar-foto.png';
+      link.href = merger.toDataURL('image/png');
+      link.click();
+
+      // Cambiamos el texto del botón temporalmente
+      btnFoto.textContent = '✅ Foto guardada';
+      setTimeout(() => { btnFoto.textContent = '📸 Hacer foto'; }, 1500);
+    });
+
+    // ===== FUNCIÓN DE VÍDEO
+    btnVideo.addEventListener('click', () => {
+      if (!sceneEl.renderer) return; // Verifica que el renderer esté listo
+
+      // Si no se está grabando, iniciamos la grabación
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        chunks = []; // Limpiamos los fragmentos anteriores
+        const stream = sceneEl.renderer.domElement.captureStream(30); // Captura el canvas 3D a 30 FPS
+        mediaRecorder = new MediaRecorder(stream); // Creamos MediaRecorder
+
+        // Al recibir datos parciales, los guardamos
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+        // Al parar la grabación, creamos el archivo final
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' }); // Creamos blob de vídeo
+          const url = URL.createObjectURL(blob); // Creamos URL temporal
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'ar-video.webm'; // Nombre del archivo
+          a.click(); // Descarga automática
+          URL.revokeObjectURL(url); // Liberamos memoria
+        };
+
+        mediaRecorder.start(); // Inicia la grabación
+        btnVideo.style.background = 'red';
+        btnVideo.textContent = '⏹ Detener grabación';
       } else {
-        console.error('Este modelo não tem animações internas!'); // Alerta se o arquivo estiver vazio
+        // Si ya se está grabando, se detiene
+        mediaRecorder.stop();
+        btnVideo.style.background = 'white';
+        btnVideo.textContent = '🔴 Vídeo';
       }
     });
   </script>
