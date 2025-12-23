@@ -42,18 +42,16 @@
 
     // --- 1. GERENCIAMENTO DE CARREGAMENTO E ANIMAÇÃO ---
     model.addEventListener('model-loaded', () => {
-      console.log("Modelo GLB carregado com sucesso.");
-      model.setAttribute('visible', 'true'); // Torna visível só após carregar
-      
-      // Força a aplicação do componente de animação
-      setTimeout(() => {
-        model.setAttribute('animation-mixer', {
-          clip: "*", // O asterisco tenta tocar qualquer animação disponível se o nome falhar
-          loop: "repeat",
-          timeScale: 1
-        });
-      }, 500);
-    });
+  console.log("Modelo GLB carregado com sucesso.");
+  model.setAttribute('visible', 'true'); // Torna visível só após carregar
+
+  // Ativa a animação com o nome correto
+  model.setAttribute('animation-mixer', {
+    clip: "SickJacken_rigAction", // nome exato da animação
+    loop: "repeat",               // loop infinito
+    timeScale: 1                  // velocidade normal
+  });
+});
 
     // --- 2. FUNÇÃO DE CAPTURA DE TELA (MERGE) ---
     btnFoto.addEventListener('click', () => {
