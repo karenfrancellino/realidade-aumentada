@@ -23,6 +23,8 @@
 
     <!-- Importa A-Frame (biblioteca 3D) -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
     <!-- Importa AR.js (Realidade Aumentada) -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
@@ -51,12 +53,14 @@
         <!-- ID para referenciar o modelo no script -->
          <!-- Ajusta o tamanho do modelo -->
         <!-- Posição relativa ao marcador -->
-        <a-entity 
-          id="personagem"  
-          gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-          scale="2 2 2"  
-          position="0 0.5 0" >
-        </a-entity>
+       <a-entity
+  id="personagem"
+  gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
+  position="0 0.5 0"
+  scale="2 2 2"
+  animation-mixer="clip: SickJacken_rigAction; loop: repeat">
+</a-entity>
+
 
       </a-marker>
 
