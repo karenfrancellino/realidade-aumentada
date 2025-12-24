@@ -1,245 +1,117 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
 </head>
 
 <body style="margin:0; overflow:hidden;">
 
-  <a-scene 
-    embedded 
-    renderer="preserveDrawingBuffer: true; alpha: true; antialias: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;">
+    <a-scene 
+        embedded 
+        vr-mode-ui="enabled: false"
+        renderer="preserveDrawingBuffer: true; alpha: true;" 
+        arjs="sourceType: webcam; debugUIEnabled: false;">
 
-    <a-marker preset="hiro">
-      <a-entity
-        id="personagem"
-        gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-        scale="2 2 2"
-        position="0 0.5 0"
-        visible="false"> </a-entity>
-    </a-marker>
-    
-    <a-entity camera></a-entity>
-  </a-scene>
-
-  <div style="position:absolute; bottom:30px; width:100%; display:flex; justify-content:space-evenly; z-index:9999;">
-    <button id="btnFoto" style="padding:15px 25px; background:#fff; border-radius:30px; border:none; font-weight:bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">📸 FOTO</button>
-    <button id="btnVideo" style="padding:15px 25px; background:#fff; border-radius:30px; border:none; font-weight:bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">🔴 VÍDEO</button>
-  </div>
-
-  <script>
-    const scene = document.querySelector('a-scene');
-    const model = document.querySelector('#personagem');
-    const btnFoto = document.querySelector('#btnFoto');
-    const btnVideo = document.querySelector('#btnVideo');
-    let recorder;
-    let chunks = [];
-
-    // --- 1. GERENCIAMENTO DE CARREGAMENTO E ANIMAÇÃO ---
-    model.addEventListener('model-loaded', () => {
-  console.log("Modelo GLB carregado com sucesso.");
-  model.setAttribute('visible', 'true'); // Torna visível só após carregar
-
-  // Ativa a animação com o nome correto
-  model.setAttribute('animation-mixer', {
-    clip: "SickJacken_rigAction", // nome exato da animação
-    loop: "repeat",               // loop infinito
-    timeScale: 1                  // velocidade normal
-  });
-});
-
-    // --- 2. FUNÇÃO DE CAPTURA DE TELA (MERGE) ---
-    btnFoto.addEventListener('click', () => {
-      // Capturamos o vídeo da webcam (gerado pelo AR.js) e o canvas 3D (A-Frame)
-      const video = document.querySelector('video');
-      const canvas3d = scene.renderer.domElement;
-      
-      const merger = document.createElement('canvas');
-      merger.width = canvas3d.width;
-      merger.height = canvas3d.height;
-      const ctx = merger.getContext('2d');
-
-      // Ordem de desenho: 1º Câmera, 2º Personagem
-      ctx.drawImage(video, 0, 0, merger.width, merger.height);
-      ctx.drawImage(canvas3d, 0, 0);
-
-      const link = document.createElement('a');
-      link.download = 'captura-ar.png';
-      link.href = merger.toDataURL('image/png');
-      link.click();
-    });
-
-    // --- 3. GRAVAÇÃO DE VÍDEO (LOOP DE RENDERIZAÇÃO) ---
-    btnVideo.addEventListener('click', () => {
-      if (!recorder || recorder.state === 'inactive') {
-        const video = document.querySelector('video');
-        const canvas3d = scene.renderer.domElement;
+        <a-marker preset="hiro">
+            <a-entity
+                id="personagem"
+                gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
+                scale="2 2 2"
+                position="0 0.5 0"
+                animation-mixer="clip: SickJacken_rigAction; loop: repeat">
+            </a-entity>
+        </a-marker>
         
-        // Criamos um canvas de saída que será gravado
-        const outputCanvas = document.createElement('canvas');
-        outputCanvas.width = canvas3d.width;
-        outputCanvas.height = canvas3d.height;
-        const ctx = outputCanvas.getContext('2d');
+        <a-entity camera></a-entity>
+    </a-scene>
 
-        // Captura o stream do canvas que estamos desenhando manualmente
-        const stream = outputCanvas.captureStream(30);
-        recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        chunks = [];
+    <div style="position:fixed; bottom:20px; width:100%; display:flex; justify-content:space-around; z-index:1000;">
+        <button id="btnFoto" style="padding:15px; border-radius:10px; background:white; border:2px solid #ccc; font-weight:bold;">📸 Foto</button>
+        <button id="btnVideo" style="padding:15px; border-radius:10px; background:white; border:2px solid #ccc; font-weight:bold;">🔴 Vídeo</button>
+    </div>
 
-        recorder.ondataavailable = e => chunks.push(e.data);
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'video-ar.webm';
-          a.click();
-        };
+    <script>
+        // Declaramos as variáveis APENAS UMA VEZ para evitar "Identifier already declared"
+        const cenaAframe = document.querySelector('a-scene');
+        const botaoFoto = document.querySelector('#btnFoto');
+        const botaoVideo = document.querySelector('#btnVideo');
+        let gravador;
+        let blocosDeVideo = [];
 
-        // LOOP MANUAL: Desenha câmera + 3D no canvas de saída 30 vezes por segundo
-        function renderLoop() {
-          if (recorder && recorder.state === 'recording') {
-            ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
-            ctx.drawImage(canvas3d, 0, 0);
-            requestAnimationFrame(renderLoop);
-          }
-        }
+        // --- FUNÇÃO PARA CAPTURAR TELA (CÂMERA + 3D) ---
+        botaoFoto.addEventListener('click', () => {
+            const videoWebcam = document.querySelector('video');
+            const canvas3D = cenaAframe.renderer.domElement;
+            
+            const canvasFinal = document.createElement('canvas');
+            canvasFinal.width = canvas3D.width;
+            canvasFinal.height = canvas3D.height;
+            const contexto = canvasFinal.getContext('2d');
 
-        recorder.start();
-        renderLoop();
-        btnVideo.textContent = "⏹ PARAR";
-        btnVideo.style.background = "#ff4d4d";
-      } else {
-        recorder.stop();
-        btnVideo.textContent = "🔴 VÍDEO";
-        btnVideo.style.background = "#fff";
-      }
-    });
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.3.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-</head>
+            // Desenha a câmera, depois o 3D
+            contexto.drawImage(videoWebcam, 0, 0, canvasFinal.width, canvasFinal.height);
+            contexto.drawImage(canvas3D, 0, 0);
 
-<body style="margin:0; overflow:hidden;">
+            const linkA = document.createElement('a');
+            linkA.download = 'ar-screenshot.png';
+            linkA.href = canvasFinal.toDataURL('image/png');
+            linkA.click();
+        });
 
-  <a-scene 
-    embedded 
-    vr-mode-ui="enabled: false"
-    renderer="preserveDrawingBuffer: true; alpha: true; logarithmicDepthBuffer: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;">
+        // --- FUNÇÃO PARA GRAVAR VÍDEO (CÂMERA + 3D) ---
+        botaoVideo.addEventListener('click', () => {
+            if (!gravador || gravador.state === 'inactive') {
+                const videoWebcam = document.querySelector('video');
+                const canvas3D = cenaAframe.renderer.domElement;
+                
+                // Canvas intermediário para o merge do vídeo
+                const canvasMerge = document.createElement('canvas');
+                canvasMerge.width = canvas3D.width;
+                canvasMerge.height = canvas3D.height;
+                const ctxMerge = canvasMerge.getContext('2d');
 
-    <a-marker preset="hiro">
-      <a-entity
-        id="personagem"
-        gltf-model="https://raw.githubusercontent.com/KarenFrancellino/ar-models/main/DROYZ_ANIMAPP_SiCkJacken_v005.glb"
-        scale="2 2 2"
-        position="0 0.5 0"
-        animation-mixer="clip: SickJacken_rigAction; loop: repeat">
-      </a-entity>
-    </a-marker>
-    
-    <a-entity camera></a-entity>
-  </a-scene>
+                const fluxo = canvasMerge.captureStream(30);
+                gravador = new MediaRecorder(fluxo, { mimeType: 'video/webm' });
+                blocosDeVideo = [];
 
-  <div style="position:absolute; bottom:30px; width:100%; display:flex; justify-content:space-evenly; z-index:9999;">
-    <button id="btnFoto" style="padding:15px 25px; background:#fff; border-radius:30px; border:none; font-weight:bold;">📸 FOTO</button>
-    <button id="btnVideo" style="padding:15px 25px; background:#fff; border-radius:30px; border:none; font-weight:bold;">🔴 VÍDEO</button>
-  </div>
+                gravador.ondataavailable = e => blocosDeVideo.push(e.data);
+                gravador.onstop = () => {
+                    const blob = new Blob(blocosDeVideo, { type: 'video/webm' });
+                    const linkV = document.createElement('a');
+                    linkV.href = URL.createObjectURL(blob);
+                    linkV.download = 'ar-video.webm';
+                    linkV.click();
+                };
 
-  <script>
-    const scene = document.querySelector('a-scene');
-    const model = document.querySelector('#personagem');
-    const btnFoto = document.querySelector('#btnFoto');
-    const btnVideo = document.querySelector('#btnVideo');
-    let recorder;
-    let chunks = [];
+                gravador.start();
+                botaoVideo.textContent = "⏹ Parar";
+                botaoVideo.style.background = "#ffcccc";
 
-    // --- SOLUÇÃO PARA O VÍDEO E FOTO PRETA ---
-    // Esta função cria o merge real da câmera + 3D
-    function getMergedCanvas() {
-      const video = document.querySelector('video');
-      const canvas3d = scene.renderer.domElement;
-      const merger = document.createElement('canvas');
-      merger.width = canvas3d.width;
-      merger.height = canvas3d.height;
-      const ctx = merger.getContext('2d');
+                // Loop que desenha os dois elementos no canvas do vídeo
+                function desenharFrame() {
+                    if (gravador && gravador.state === 'recording') {
+                        ctxMerge.drawImage(videoWebcam, 0, 0, canvasMerge.width, canvasMerge.height);
+                        ctxMerge.drawImage(canvas3D, 0, 0);
+                        requestAnimationFrame(desenharFrame);
+                    }
+                }
+                desenharFrame();
+            } else {
+                gravador.stop();
+                botaoVideo.textContent = "🔴 Vídeo";
+                botaoVideo.style.background = "white";
+            }
+        });
 
-      // Desenha a webcam
-      ctx.drawImage(video, 0, 0, merger.width, merger.height);
-      // Desenha o personagem
-      ctx.drawImage(canvas3d, 0, 0);
-      return merger;
-    }
-
-    btnFoto.addEventListener('click', () => {
-      const mergedCanvas = getMergedCanvas();
-      const link = document.createElement('a');
-      link.download = 'captura-ar.png';
-      link.href = mergedCanvas.toDataURL('image/png');
-      link.click();
-    });
-
-    btnVideo.addEventListener('click', () => {
-      if (!recorder || recorder.state === 'inactive') {
-        const mergedCanvasForVideo = document.createElement('canvas');
-        mergedCanvasForVideo.width = scene.renderer.domElement.width;
-        mergedCanvasForVideo.height = scene.renderer.domElement.height;
-        const ctx = mergedCanvasForVideo.getContext('2d');
-        const videoElement = document.querySelector('video');
-        const canvas3d = scene.renderer.domElement;
-
-        const stream = mergedCanvasForVideo.captureStream(30);
-        recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        chunks = [];
-
-        recorder.ondataavailable = e => chunks.push(e.data);
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'video-ar.webm';
-          a.click();
-        };
-
-        recorder.start();
-        btnVideo.textContent = "⏹ PARAR";
-
-        // Loop de renderização para o vídeo não sair preto
-        function step() {
-          if (recorder && recorder.state === 'recording') {
-            ctx.drawImage(videoElement, 0, 0, mergedCanvasForVideo.width, mergedCanvasForVideo.height);
-            ctx.drawImage(canvas3d, 0, 0);
-            requestAnimationFrame(step);
-          }
-        }
-        step();
-      } else {
-        recorder.stop();
-        btnVideo.textContent = "🔴 VÍDEO";
-      }
-    });
-
-    // --- FORÇAR ANIMAÇÃO ---
-    model.addEventListener('model-loaded', () => {
-      // Pequeno delay para evitar o conflito do MatrixMode do AR.js
-      setTimeout(() => {
-        model.setAttribute('animation-mixer', 'clip: SickJacken_rigAction; loop: repeat');
-      }, 1000);
-    });
-  </script>
+        // --- VERIFICAÇÃO DE CARREGAMENTO ---
+        document.querySelector('#personagem').addEventListener('model-loaded', () => {
+            console.log("Boneco carregado e pronto!");
+        });
+    </script>
 </body>
 </html>
